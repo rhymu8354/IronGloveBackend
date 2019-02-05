@@ -6,9 +6,19 @@ cmake_minimum_required(VERSION 3.8)
 set(This IronGlove)
 
 set(Sources
+    src/Components/Position.hpp
+    src/Components/Tile.hpp
+    src/Systems/Render.cpp
+    src/Systems/Render.hpp
+    src/Component.hpp
+    src/Components.cpp
+    src/Components.hpp
     src/game.cpp
     src/game.hpp
     src/main.cpp
+    src/System.hpp
+    src/Systems.cpp
+    src/Systems.hpp
     src/TimeKeeper.cpp
     src/TimeKeeper.hpp
 )

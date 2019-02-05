@@ -1,5 +1,4 @@
-#ifndef IRON_GLOVE_GAME_HPP
-#define IRON_GLOVE_GAME_HPP
+#pragma once
 
 /**
  * @file game.hpp
@@ -56,5 +55,3 @@ private:
      */
     std::shared_ptr< Impl > impl_;
 };
-
-#endif /* IRON_GLOVE_GAME_HPP */
