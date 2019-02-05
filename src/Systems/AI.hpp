@@ -5,23 +5,21 @@
 #include <memory>
 #include <WebSockets/WebSocket.hpp>
 
-class Render : public System {
+class AI : public System {
     // Lifecycle Methods
 public:
-    ~Render() noexcept;
-    Render(const Render&) = delete;
-    Render(Render&&) noexcept = delete;
-    Render& operator=(const Render&) = delete;
-    Render& operator=(Render&&) noexcept = delete;
+    ~AI() noexcept;
+    AI(const AI&) = delete;
+    AI(AI&&) noexcept = delete;
+    AI& operator=(const AI&) = delete;
+    AI& operator=(AI&&) noexcept = delete;
 
     // Public Methods
 public:
     /**
      * This is the constructor of the class.
      */
-    Render();
-
-    void SetClient(std::shared_ptr< WebSockets::WebSocket > ws);
+    AI();
 
     // System
 public:

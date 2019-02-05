@@ -4,6 +4,7 @@
 
 #include <future>
 #include <Json/Value.hpp>
+#include <mutex>
 #include <string>
 #include <SystemAbstractions/DiagnosticsSender.hpp>
 #include <thread>
@@ -16,6 +17,7 @@ struct Game::Impl
     SystemAbstractions::DiagnosticsSender diagnosticsSender;
     Components components;
     SystemCollection systems;
+    std::mutex mutex;
     std::promise< void > stopWorker;
     std::thread worker;
 
@@ -35,27 +37,29 @@ struct Game::Impl
     }
 
     void OnWebSocketText(const std::string& data) {
+        std::lock_guard< decltype(mutex) > lock(mutex);
+        const auto inputsInfo = components.GetComponentsOfType(Components::Type::Input);
+        if (inputsInfo.n == 0) {
+            return;
+        }
+        auto& input = ((Input*)inputsInfo.first)[0];
         const auto message = Json::Value::FromEncoding(data);
-        if (message["type"] == "keyDown") {
+        if (message["type"] == "fire") {
             const auto keyString = (std::string)message["key"];
             if (keyString.empty()) {
-                return;
+                input.fire = 0;
+            } else {
+                const auto key = keyString[0];
+                input.fire = key;
             }
-            const auto key = keyString[0];
-            diagnosticsSender.SendDiagnosticInformationString(
-                3,
-                std::string("Key Down: ") + key
-            );
-        } else if (message["type"] == "keyUp") {
+        } else if (message["type"] == "move") {
             const auto keyString = (std::string)message["key"];
             if (keyString.empty()) {
-                return;
+                input.move = 0;
+            } else {
+                const auto key = keyString[0];
+                input.move = key;
             }
-            const auto key = keyString[0];
-            diagnosticsSender.SendDiagnosticInformationString(
-                3,
-                std::string("Key Up: ") + key
-            );
         } else if (message["type"] == "hello") {
         }
     }
@@ -87,6 +91,7 @@ struct Game::Impl
 
     void AddPlayer(unsigned int x, unsigned int y) {
         const auto id = components.CreateEntity();
+        const auto input = (Input*)components.CreateComponentOfType(Components::Type::Input, id);
         const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
         const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
         tile->name = "hero";
@@ -96,6 +101,7 @@ struct Game::Impl
 
     void AddMonster(unsigned int x, unsigned int y) {
         const auto id = components.CreateEntity();
+        const auto monster = (Monster*)components.CreateComponentOfType(Components::Type::Monster, id);
         const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
         const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
         tile->name = "monster";
@@ -109,12 +115,15 @@ struct Game::Impl
             "Worker started!"
         );
         auto workerToldToStop = stopWorker.get_future();
+        size_t tick = 0;
         while (
-            workerToldToStop.wait_for(std::chrono::milliseconds(2000))
+            workerToldToStop.wait_for(std::chrono::milliseconds(250))
             != std::future_status::ready
         ) {
+            ++tick;
+            std::lock_guard< decltype(mutex) > lock(mutex);
             for (const auto system: systems) {
-                system->Update(components);
+                system->Update(components, tick);
             }
         }
         diagnosticsSender.SendDiagnosticInformationString(
@@ -144,8 +153,8 @@ void Game::Start(
     impl_->completeDelegate = completeDelegate;
     impl_->systems = Systems(ws);
     impl_->AddPlayer(0, 0);
-    impl_->AddMonster(1, 0);
-    impl_->AddMonster(0, 1);
+    impl_->AddMonster(6, 2);
+    impl_->AddMonster(1, 7);
     impl_->SetWebSocketDelegates();
     impl_->worker = std::thread(&Impl::Worker, impl_.get());
 }

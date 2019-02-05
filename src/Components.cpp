@@ -4,6 +4,8 @@
 
 struct Components::Impl {
     int nextEntityId = 1;
+    std::vector< Input > inputs;
+    std::vector< Monster > monsters;
     std::vector< Position > positions;
     std::vector< Tile > tiles;
 };
@@ -18,6 +20,16 @@ Components::Components()
 auto Components::GetComponentsOfType(Type type) -> ComponentList {
     ComponentList list;
     switch (type) {
+        case Type::Input: {
+            list.first = impl_->inputs.data();
+            list.n = impl_->inputs.size();
+        } break;
+
+        case Type::Monster: {
+            list.first = impl_->monsters.data();
+            list.n = impl_->monsters.size();
+        } break;
+
         case Type::Position: {
             list.first = impl_->positions.data();
             list.n = impl_->positions.size();
@@ -37,6 +49,18 @@ auto Components::GetComponentsOfType(Type type) -> ComponentList {
 Component* Components::CreateComponentOfType(Type type, int entityId) {
     Component* component;
     switch (type) {
+        case Type::Input: {
+            const auto i = impl_->inputs.size();
+            impl_->inputs.resize(i + 1);
+            component = &impl_->inputs[i];
+        } break;
+
+        case Type::Monster: {
+            const auto i = impl_->monsters.size();
+            impl_->monsters.resize(i + 1);
+            component = &impl_->monsters[i];
+        } break;
+
         case Type::Position: {
             const auto i = impl_->positions.size();
             impl_->positions.resize(i + 1);
@@ -59,6 +83,24 @@ Component* Components::CreateComponentOfType(Type type, int entityId) {
 
 Component* Components::GetEntityComponentOfType(Type type, int entityId) {
     switch (type) {
+        case Type::Input: {
+            const auto n = impl_->inputs.size();
+            for (size_t i = 0; i < n; ++i) {
+                if (impl_->inputs[i].entityId == entityId) {
+                    return &impl_->inputs[i];
+                }
+            }
+        } break;
+
+        case Type::Monster: {
+            const auto n = impl_->monsters.size();
+            for (size_t i = 0; i < n; ++i) {
+                if (impl_->monsters[i].entityId == entityId) {
+                    return &impl_->monsters[i];
+                }
+            }
+        } break;
+
         case Type::Position: {
             const auto n = impl_->positions.size();
             for (size_t i = 0; i < n; ++i) {

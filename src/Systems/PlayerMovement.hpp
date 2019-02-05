@@ -5,23 +5,21 @@
 #include <memory>
 #include <WebSockets/WebSocket.hpp>
 
-class Render : public System {
+class PlayerMovement : public System {
     // Lifecycle Methods
 public:
-    ~Render() noexcept;
-    Render(const Render&) = delete;
-    Render(Render&&) noexcept = delete;
-    Render& operator=(const Render&) = delete;
-    Render& operator=(Render&&) noexcept = delete;
+    ~PlayerMovement() noexcept;
+    PlayerMovement(const PlayerMovement&) = delete;
+    PlayerMovement(PlayerMovement&&) noexcept = delete;
+    PlayerMovement& operator=(const PlayerMovement&) = delete;
+    PlayerMovement& operator=(PlayerMovement&&) noexcept = delete;
 
     // Public Methods
 public:
     /**
      * This is the constructor of the class.
      */
-    Render();
-
-    void SetClient(std::shared_ptr< WebSockets::WebSocket > ws);
+    PlayerMovement();
 
     // System
 public:

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Component.hpp"
+#include "Components/Input.hpp"
+#include "Components/Monster.hpp"
 #include "Components/Position.hpp"
 #include "Components/Tile.hpp"
 
@@ -10,6 +12,8 @@ class Components {
     // Types
 public:
     enum class Type {
+        Input,
+        Monster,
         Position,
         Tile,
     };

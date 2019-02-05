@@ -4,5 +4,8 @@
 
 class System {
 public:
-    virtual void Update(Components& components) = 0;
+    virtual void Update(
+        Components& components,
+        size_t tick
+    ) = 0;
 };

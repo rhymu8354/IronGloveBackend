@@ -6,8 +6,13 @@ cmake_minimum_required(VERSION 3.8)
 set(This IronGlove)
 
 set(Sources
+    src/Components/Input.hpp
     src/Components/Position.hpp
     src/Components/Tile.hpp
+    src/Systems/AI.cpp
+    src/Systems/AI.hpp
+    src/Systems/PlayerMovement.cpp
+    src/Systems/PlayerMovement.hpp
     src/Systems/Render.cpp
     src/Systems/Render.hpp
     src/Component.hpp

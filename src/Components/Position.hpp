@@ -3,6 +3,6 @@
 #include "../Component.hpp"
 
 struct Position : public Component {
-    unsigned int x = 0;
-    unsigned int y = 0;
+    int x = 0;
+    int y = 0;
 };

@@ -19,7 +19,10 @@ void Render::SetClient(std::shared_ptr< WebSockets::WebSocket > ws) {
     impl_->ws = ws;
 }
 
-void Render::Update(Components& components) {
+void Render::Update(
+    Components& components,
+    size_t tick
+) {
     auto sprites = Json::Array({});
     const auto tilesInfo = components.GetComponentsOfType(Components::Type::Tile);
     auto tiles = (Tile*)tilesInfo.first;
