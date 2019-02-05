@@ -1,5 +1,6 @@
 #include "game.hpp"
 
+#include <Json/Value.hpp>
 #include <string>
 #include <SystemAbstractions/DiagnosticsSender.hpp>
 
@@ -7,7 +8,6 @@ struct Game::Impl {
     std::shared_ptr< WebSockets::WebSocket > ws;
     CompleteDelegate completeDelegate;
     SystemAbstractions::DiagnosticsSender diagnosticsSender;
-
 
     explicit Impl(const std::string& id)
         : diagnosticsSender(id)
@@ -23,6 +23,28 @@ struct Game::Impl {
     }
 
     void OnWebSocketText(const std::string& data) {
+        const auto message = Json::Value::FromEncoding(data);
+        if (message["type"] == "keyDown") {
+            const auto keyString = (std::string)message["key"];
+            if (keyString.empty()) {
+                return;
+            }
+            const auto key = keyString[0];
+            diagnosticsSender.SendDiagnosticInformationString(
+                3,
+                std::string("Key Down: ") + key
+            );
+        } else if (message["type"] == "keyUp") {
+            const auto keyString = (std::string)message["key"];
+            if (keyString.empty()) {
+                return;
+            }
+            const auto key = keyString[0];
+            diagnosticsSender.SendDiagnosticInformationString(
+                3,
+                std::string("Key Up: ") + key
+            );
+        }
     }
 };
 
