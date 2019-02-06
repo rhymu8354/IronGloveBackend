@@ -46,6 +46,7 @@ public:
     Component* CreateComponentOfType(Type type, int entityId);
     Component* GetEntityComponentOfType(Type type, int entityId);
     int CreateEntity();
+    void DestroyEntity(int entityId);
     bool IsObstacleInTheWay(int x, int y);
 
     // Private properties

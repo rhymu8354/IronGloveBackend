@@ -171,6 +171,57 @@ int Components::CreateEntity() {
     return impl_->nextEntityId++;
 }
 
+void Components::DestroyEntity(int entityId) {
+    auto collidersEntry = impl_->colliders.begin();
+    while (collidersEntry != impl_->colliders.end()) {
+        if (collidersEntry->entityId == entityId) {
+            collidersEntry = impl_->colliders.erase(collidersEntry);
+        } else {
+            ++collidersEntry;
+        }
+    }
+    auto healthsEntry = impl_->healths.begin();
+    while (healthsEntry != impl_->healths.end()) {
+        if (healthsEntry->entityId == entityId) {
+            healthsEntry = impl_->healths.erase(healthsEntry);
+        } else {
+            ++healthsEntry;
+        }
+    }
+    auto inputsEntry = impl_->inputs.begin();
+    while (inputsEntry != impl_->inputs.end()) {
+        if (inputsEntry->entityId == entityId) {
+            inputsEntry = impl_->inputs.erase(inputsEntry);
+        } else {
+            ++inputsEntry;
+        }
+    }
+    auto monstersEntry = impl_->monsters.begin();
+    while (monstersEntry != impl_->monsters.end()) {
+        if (monstersEntry->entityId == entityId) {
+            monstersEntry = impl_->monsters.erase(monstersEntry);
+        } else {
+            ++monstersEntry;
+        }
+    }
+    auto positionsEntry = impl_->positions.begin();
+    while (positionsEntry != impl_->positions.end()) {
+        if (positionsEntry->entityId == entityId) {
+            positionsEntry = impl_->positions.erase(positionsEntry);
+        } else {
+            ++positionsEntry;
+        }
+    }
+    auto tilesEntry = impl_->tiles.begin();
+    while (tilesEntry != impl_->tiles.end()) {
+        if (tilesEntry->entityId == entityId) {
+            tilesEntry = impl_->tiles.erase(tilesEntry);
+        } else {
+            ++tilesEntry;
+        }
+    }
+}
+
 bool Components::IsObstacleInTheWay(int x, int y) {
     for (size_t i = 0; i < impl_->colliders.size(); ++i) {
         const auto& collider = impl_->colliders[i];
