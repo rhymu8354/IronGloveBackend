@@ -7,7 +7,9 @@ set(This IronGlove)
 
 set(Sources
     src/Components/Collider.hpp
+    src/Components/Health.hpp
     src/Components/Input.hpp
+    src/Components/Monster.hpp
     src/Components/Position.hpp
     src/Components/Tile.hpp
     src/Systems/AI.cpp
