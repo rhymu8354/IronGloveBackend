@@ -35,9 +35,7 @@ void Weapons::Update(
         }
         weapon.phase = ((weapon.phase + 1) % 4);
         tile->name = SystemAbstractions::sprintf("axe%d", weapon.phase);
-        const auto x = position->x + weapon.dx;
-        const auto y = position->y + weapon.dy;
-        const auto collider = components.GetColliderAt(x, y);
+        auto collider = components.GetColliderAt(position->x, position->y);
         if (collider) {
             const auto health = (Health*)components.GetEntityComponentOfType(Components::Type::Health, collider->entityId);
             if (health != nullptr) {
@@ -48,8 +46,22 @@ void Weapons::Update(
             }
             (void)entitiesDestroyed.insert(weapon.entityId);
         } else {
-            position->x = x;
-            position->y = y;
+            const auto x = position->x + weapon.dx;
+            const auto y = position->y + weapon.dy;
+            collider = components.GetColliderAt(x, y);
+            if (collider) {
+                const auto health = (Health*)components.GetEntityComponentOfType(Components::Type::Health, collider->entityId);
+                if (health != nullptr) {
+                    --health->hp;
+                    if (health->hp <= 0) {
+                        (void)entitiesDestroyed.insert(collider->entityId);
+                    }
+                }
+                (void)entitiesDestroyed.insert(weapon.entityId);
+            } else {
+                position->x = x;
+                position->y = y;
+            }
         }
     }
     for (const auto entityId: entitiesDestroyed) {
