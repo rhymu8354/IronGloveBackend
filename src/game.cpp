@@ -111,6 +111,26 @@ struct Game::Impl
         tile->z = 1;
         position->x = x;
         position->y = y;
+
+    void AddWall(unsigned int x, unsigned int y) {
+        const auto id = components.CreateEntity();
+        const auto collider = (Collider*)components.CreateComponentOfType(Components::Type::Collider, id);
+        const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
+        const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
+        tile->name = "wall";
+        tile->z = 1;
+        position->x = x;
+        position->y = y;
+    }
+
+    void AddFloor(unsigned int x, unsigned int y) {
+        const auto id = components.CreateEntity();
+        const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
+        const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
+        tile->name = "floor";
+        tile->z = 0;
+        position->x = x;
+        position->y = y;
     }
 
     void Worker() {
@@ -159,6 +179,19 @@ void Game::Start(
     impl_->AddPlayer(0, 0);
     impl_->AddMonster(6, 2);
     impl_->AddMonster(1, 7);
+    for (int y = 0; y <= 8; ++y) {
+        for (int x = 0; x <= 10; ++x) {
+            if (
+                ((x == 5) && (y == 5))
+                || ((x == 6) && (y == 5))
+                || ((x == 5) && (y == 6))
+            ) {
+                impl_->AddWall(x, y);
+            } else {
+                impl_->AddFloor(x, y);
+            }
+        }
+    }
     impl_->SetWebSocketDelegates();
     impl_->worker = std::thread(&Impl::Worker, impl_.get());
 }
