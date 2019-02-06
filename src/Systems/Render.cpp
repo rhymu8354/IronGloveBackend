@@ -37,6 +37,7 @@ void Render::Update(
             {"texture", tile.name},
             {"x", (int)position->x},
             {"y", (int)position->y},
+            {"z", tile.z}
         }));
     }
     impl_->ws->SendText(

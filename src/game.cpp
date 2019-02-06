@@ -96,6 +96,7 @@ struct Game::Impl
         const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
         const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
         tile->name = "hero";
+        tile->z = 1;
         position->x = x;
         position->y = y;
     }
@@ -107,6 +108,7 @@ struct Game::Impl
         const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
         const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
         tile->name = "monster";
+        tile->z = 1;
         position->x = x;
         position->y = y;
     }
