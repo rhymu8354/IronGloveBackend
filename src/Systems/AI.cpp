@@ -4,6 +4,10 @@
 #include <memory>
 #include <WebSockets/WebSocket.hpp>
 
+namespace {
+
+}
+
 struct AI::Impl {
     std::shared_ptr< WebSockets::WebSocket > ws;
 };
@@ -28,6 +32,7 @@ void AI::Update(
     }
     const auto playerPosition = (Position*)components.GetEntityComponentOfType(Components::Type::Position, inputsInfo.first[0].entityId);
 //    const auto positionsInfo = components.GetComponentsOfType(Components::Type::Position);
+    const auto collidersInfo = components.GetComponentsOfType(Components::Type::Collider);
     const auto monstersInfo = components.GetComponentsOfType(Components::Type::Monster);
     auto monsters = (Monster*)monstersInfo.first;
     for (size_t i = 0; i < monstersInfo.n; ++i) {
@@ -38,18 +43,40 @@ void AI::Update(
         }
         const auto dx = abs(position->x - playerPosition->x);
         const auto dy = abs(position->y - playerPosition->y);
-        if (dx > dy) {
-            if (position->x < playerPosition->x) {
-                ++position->x;
-            } else if (position->x > playerPosition->x) {
-                --position->x;
-            }
-        } else {
-            if (position->y < playerPosition->y) {
-                ++position->y;
-            } else if (position->y > playerPosition->y) {
-                --position->y;
-            }
+        int mx = 0;
+        int my = 0;
+        if (position->x < playerPosition->x) {
+            ++mx;
+        } else if (position->x > playerPosition->x) {
+            --mx;
+        }
+        if (position->y < playerPosition->y) {
+            ++my;
+        } else if (position->y > playerPosition->y) {
+            --my;
+        }
+        if (
+            (dx > dy)
+            && !components.IsObstacleInTheWay(
+                position->x + mx,
+                position->y
+            )
+        ) {
+            position->x += mx;
+        } else if (
+            !components.IsObstacleInTheWay(
+                position->x,
+                position->y + my
+            )
+        ) {
+            position->y += my;
+        } else if (
+            !components.IsObstacleInTheWay(
+                position->x + mx,
+                position->y
+            )
+        ) {
+            position->x += mx;
         }
     }
 }

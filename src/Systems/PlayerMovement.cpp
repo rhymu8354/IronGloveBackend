@@ -29,25 +29,37 @@ void PlayerMovement::Update(
         }
         switch (input.move) {
             case 'j': {
-                if (position->x > 0) {
+                if (
+                    (position->x > 0)
+                    && !components.IsObstacleInTheWay(position->x - 1, position->y)
+                ) {
                     --position->x;
                 }
             } break;
 
             case 'l': {
-                if (position->x < 10) {
+                if (
+                    (position->x < 10)
+                    && !components.IsObstacleInTheWay(position->x + 1, position->y)
+                ) {
                     ++position->x;
                 }
             } break;
 
             case 'i': {
-                if (position->y > 0) {
+                if (
+                    (position->y > 0)
+                    && !components.IsObstacleInTheWay(position->x, position->y - 1)
+                ) {
                     --position->y;
                 }
             } break;
 
             case 'k': {
-                if (position->y < 10) {
+                if (
+                    (position->y < 8)
+                    && !components.IsObstacleInTheWay(position->x, position->y + 1)
+                ) {
                     ++position->y;
                 }
             } break;

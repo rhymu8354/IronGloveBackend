@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 3.8)
 set(This IronGlove)
 
 set(Sources
+    src/Components/Collider.hpp
     src/Components/Input.hpp
     src/Components/Position.hpp
     src/Components/Tile.hpp

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Component.hpp"
+#include "Components/Collider.hpp"
 #include "Components/Input.hpp"
 #include "Components/Monster.hpp"
 #include "Components/Position.hpp"
@@ -12,6 +13,7 @@ class Components {
     // Types
 public:
     enum class Type {
+        Collider,
         Input,
         Monster,
         Position,
@@ -42,6 +44,7 @@ public:
     Component* CreateComponentOfType(Type type, int entityId);
     Component* GetEntityComponentOfType(Type type, int entityId);
     int CreateEntity();
+    bool IsObstacleInTheWay(int x, int y);
 
     // Private properties
 private:

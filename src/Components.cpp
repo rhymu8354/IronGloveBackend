@@ -4,6 +4,7 @@
 
 struct Components::Impl {
     int nextEntityId = 1;
+    std::vector< Collider > colliders;
     std::vector< Input > inputs;
     std::vector< Monster > monsters;
     std::vector< Position > positions;
@@ -20,6 +21,11 @@ Components::Components()
 auto Components::GetComponentsOfType(Type type) -> ComponentList {
     ComponentList list;
     switch (type) {
+        case Type::Collider: {
+            list.first = impl_->colliders.data();
+            list.n = impl_->colliders.size();
+        } break;
+
         case Type::Input: {
             list.first = impl_->inputs.data();
             list.n = impl_->inputs.size();
@@ -49,6 +55,12 @@ auto Components::GetComponentsOfType(Type type) -> ComponentList {
 Component* Components::CreateComponentOfType(Type type, int entityId) {
     Component* component;
     switch (type) {
+        case Type::Collider: {
+            const auto i = impl_->colliders.size();
+            impl_->colliders.resize(i + 1);
+            component = &impl_->colliders[i];
+        } break;
+
         case Type::Input: {
             const auto i = impl_->inputs.size();
             impl_->inputs.resize(i + 1);
@@ -83,6 +95,15 @@ Component* Components::CreateComponentOfType(Type type, int entityId) {
 
 Component* Components::GetEntityComponentOfType(Type type, int entityId) {
     switch (type) {
+        case Type::Collider: {
+            const auto n = impl_->colliders.size();
+            for (size_t i = 0; i < n; ++i) {
+                if (impl_->colliders[i].entityId == entityId) {
+                    return &impl_->colliders[i];
+                }
+            }
+        } break;
+
         case Type::Input: {
             const auto n = impl_->inputs.size();
             for (size_t i = 0; i < n; ++i) {
@@ -127,4 +148,21 @@ Component* Components::GetEntityComponentOfType(Type type, int entityId) {
 
 int Components::CreateEntity() {
     return impl_->nextEntityId++;
+}
+
+bool Components::IsObstacleInTheWay(int x, int y) {
+    for (size_t i = 0; i < impl_->colliders.size(); ++i) {
+        const auto& collider = impl_->colliders[i];
+        const auto position = (Position*)GetEntityComponentOfType(Components::Type::Position, collider.entityId);
+        if (position == nullptr) {
+            continue;
+        }
+        if (
+            (position->x == x)
+            && (position->y == y)
+        ) {
+            return true;
+        }
+    }
+    return false;
 }
