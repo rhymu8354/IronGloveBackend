@@ -19,6 +19,9 @@ void PlayerMovement::Update(
     Components& components,
     size_t tick
 ) {
+    if ((tick % 2) != 0) {
+        return;
+    }
     const auto inputsInfo = components.GetComponentsOfType(Components::Type::Input);
     auto inputs = (Input*)inputsInfo.first;
     for (size_t i = 0; i < inputsInfo.n; ++i) {
@@ -29,37 +32,25 @@ void PlayerMovement::Update(
         }
         switch (input.move) {
             case 'j': {
-                if (
-                    (position->x > 0)
-                    && !components.IsObstacleInTheWay(position->x - 1, position->y)
-                ) {
+                if (!components.IsObstacleInTheWay(position->x - 1, position->y)) {
                     --position->x;
                 }
             } break;
 
             case 'l': {
-                if (
-                    (position->x < 10)
-                    && !components.IsObstacleInTheWay(position->x + 1, position->y)
-                ) {
+                if (!components.IsObstacleInTheWay(position->x + 1, position->y)) {
                     ++position->x;
                 }
             } break;
 
             case 'i': {
-                if (
-                    (position->y > 0)
-                    && !components.IsObstacleInTheWay(position->x, position->y - 1)
-                ) {
+                if (!components.IsObstacleInTheWay(position->x, position->y - 1)) {
                     --position->y;
                 }
             } break;
 
             case 'k': {
-                if (
-                    (position->y < 8)
-                    && !components.IsObstacleInTheWay(position->x, position->y + 1)
-                ) {
+                if (!components.IsObstacleInTheWay(position->x, position->y + 1)) {
                     ++position->y;
                 }
             } break;

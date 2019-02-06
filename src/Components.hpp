@@ -8,6 +8,7 @@
 #include "Components/Monster.hpp"
 #include "Components/Position.hpp"
 #include "Components/Tile.hpp"
+#include "Components/Weapon.hpp"
 
 #include <memory>
 
@@ -22,6 +23,7 @@ public:
         Monster,
         Position,
         Tile,
+        Weapon,
     };
 
     struct ComponentList {
@@ -50,6 +52,7 @@ public:
     int CreateEntity();
     void DestroyEntity(int entityId);
     bool IsObstacleInTheWay(int x, int y);
+    Collider* GetColliderAt(int x, int y);
 
     // Private properties
 private:

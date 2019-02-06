@@ -11,6 +11,7 @@ struct Components::Impl {
     std::vector< Monster > monsters;
     std::vector< Position > positions;
     std::vector< Tile > tiles;
+    std::vector< Weapon > weapons;
 };
 
 Components::~Components() = default;
@@ -56,6 +57,11 @@ auto Components::GetComponentsOfType(Type type) -> ComponentList {
         case Type::Tile: {
             list.first = impl_->tiles.data();
             list.n = impl_->tiles.size();
+        } break;
+
+        case Type::Weapon: {
+            list.first = impl_->weapons.data();
+            list.n = impl_->weapons.size();
         } break;
 
         default: {
@@ -107,6 +113,12 @@ Component* Components::CreateComponentOfType(Type type, int entityId) {
             const auto i = impl_->tiles.size();
             impl_->tiles.resize(i + 1);
             component = &impl_->tiles[i];
+        } break;
+
+        case Type::Weapon: {
+            const auto i = impl_->weapons.size();
+            impl_->weapons.resize(i + 1);
+            component = &impl_->weapons[i];
         } break;
 
         default: {
@@ -182,6 +194,15 @@ Component* Components::GetEntityComponentOfType(Type type, int entityId) {
             }
         } break;
 
+        case Type::Weapon: {
+            const auto n = impl_->weapons.size();
+            for (size_t i = 0; i < n; ++i) {
+                if (impl_->weapons[i].entityId == entityId) {
+                    return &impl_->weapons[i];
+                }
+            }
+        } break;
+
         default: {
         }
     }
@@ -249,6 +270,14 @@ void Components::DestroyEntity(int entityId) {
             ++tilesEntry;
         }
     }
+    auto weaponsEntry = impl_->weapons.begin();
+    while (weaponsEntry != impl_->weapons.end()) {
+        if (weaponsEntry->entityId == entityId) {
+            weaponsEntry = impl_->weapons.erase(weaponsEntry);
+        } else {
+            ++weaponsEntry;
+        }
+    }
 }
 
 bool Components::IsObstacleInTheWay(int x, int y) {
@@ -266,4 +295,21 @@ bool Components::IsObstacleInTheWay(int x, int y) {
         }
     }
     return false;
+}
+
+Collider* Components::GetColliderAt(int x, int y) {
+    for (size_t i = 0; i < impl_->colliders.size(); ++i) {
+        const auto& collider = impl_->colliders[i];
+        const auto position = (Position*)GetEntityComponentOfType(Components::Type::Position, collider.entityId);
+        if (position == nullptr) {
+            continue;
+        }
+        if (
+            (position->x == x)
+            && (position->y == y)
+        ) {
+            return &impl_->colliders[i];
+        }
+    }
+    return nullptr;
 }

@@ -24,7 +24,7 @@ void AI::Update(
     Components& components,
     size_t tick
 ) {
-    if ((tick % 2) == 0) {
+    if ((tick % 5) != 0) {
         return;
     }
     const auto inputsInfo = components.GetComponentsOfType(Components::Type::Input);

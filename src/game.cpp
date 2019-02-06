@@ -128,7 +128,7 @@ struct Game::Impl
         tile->z = 1;
         position->x = x;
         position->y = y;
-        generator->spawnChance = 0.1;
+        generator->spawnChance = 0.05;
         health->hp = 10;
     }
 
@@ -153,6 +153,18 @@ struct Game::Impl
         position->y = y;
     }
 
+    void AddWeapon(unsigned int x, unsigned int y) {
+        const auto id = components.CreateEntity();
+        const auto weapon = (Weapon*)components.CreateComponentOfType(Components::Type::Weapon, id);
+        const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
+        const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
+        weapon->dx = 1;
+        tile->name = "axe0";
+        tile->z = 2;
+        position->x = x;
+        position->y = y;
+    }
+
     void Worker() {
         diagnosticsSender.SendDiagnosticInformationString(
             3,
@@ -161,7 +173,7 @@ struct Game::Impl
         auto workerToldToStop = stopWorker.get_future();
         size_t tick = 0;
         while (
-            workerToldToStop.wait_for(std::chrono::milliseconds(250))
+            workerToldToStop.wait_for(std::chrono::milliseconds(100))
             != std::future_status::ready
         ) {
             ++tick;
@@ -196,16 +208,23 @@ void Game::Start(
     impl_->ws = ws;
     impl_->completeDelegate = completeDelegate;
     impl_->systems = Systems(ws);
-    impl_->AddPlayer(0, 0);
+    impl_->AddPlayer(1, 1);
     impl_->AddMonster(6, 2);
     impl_->AddMonster(1, 7);
     impl_->AddGenerator(8, 4);
-    for (int y = 0; y <= 8; ++y) {
-        for (int x = 0; x <= 10; ++x) {
+    impl_->AddWeapon(6, 6);
+    for (int y = 0; y <= 12; ++y) {
+        for (int x = 0; x <= 14; ++x) {
             if (
-                ((x == 5) && (y == 5))
-                || ((x == 6) && (y == 5))
-                || ((x == 5) && (y == 6))
+                (
+                    ((x == 5) && (y == 5))
+                    || ((x == 6) && (y == 5))
+                    || ((x == 5) && (y == 6))
+                )
+                || (x == 0)
+                || (x == 14)
+                || (y == 0)
+                || (y == 12)
             ) {
                 impl_->AddWall(x, y);
             } else {
