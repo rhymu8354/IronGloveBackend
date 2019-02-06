@@ -7,5 +7,9 @@
 
 struct Input : public Component {
     char fire = 0;
+    bool fireReleased = false;
+    bool fireThisTick = false;
     char move = 0;
+    bool moveReleased = false;
+    bool moveThisTick = false;
 };

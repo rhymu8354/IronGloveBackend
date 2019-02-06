@@ -25,7 +25,7 @@ void PlayerMovement::Update(
     const auto inputsInfo = components.GetComponentsOfType(Components::Type::Input);
     auto inputs = (Input*)inputsInfo.first;
     for (size_t i = 0; i < inputsInfo.n; ++i) {
-        const auto& input = inputs[i];
+        auto& input = inputs[i];
         const auto position = (Position*)components.GetEntityComponentOfType(Components::Type::Position, input.entityId);
         if (position == nullptr) {
             continue;
@@ -57,6 +57,10 @@ void PlayerMovement::Update(
 
             default: {
             }
+        }
+        input.moveThisTick = false;
+        if (input.moveReleased) {
+            input.move = 0;
         }
     }
 }

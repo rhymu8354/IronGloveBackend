@@ -47,17 +47,27 @@ struct Game::Impl
         if (message["type"] == "fire") {
             const auto keyString = (std::string)message["key"];
             if (keyString.empty()) {
-                input.fire = 0;
+                input.fireReleased = true;
+                if (!input.fireThisTick) {
+                    input.fire = 0;
+                }
             } else {
                 const auto key = keyString[0];
+                input.fireReleased = false;
+                input.fireThisTick = true;
                 input.fire = key;
             }
         } else if (message["type"] == "move") {
             const auto keyString = (std::string)message["key"];
             if (keyString.empty()) {
-                input.move = 0;
+                input.moveReleased = true;
+                if (!input.moveThisTick) {
+                    input.move = 0;
+                }
             } else {
                 const auto key = keyString[0];
+                input.moveReleased = false;
+                input.moveThisTick = true;
                 input.move = key;
             }
         } else if (message["type"] == "hello") {

@@ -22,7 +22,7 @@ void PlayerFiring::Update(
     const auto inputsInfo = components.GetComponentsOfType(Components::Type::Input);
     auto inputs = (Input*)inputsInfo.first;
     for (size_t i = 0; i < inputsInfo.n; ++i) {
-        const auto& input = inputs[i];
+        auto& input = inputs[i];
         const auto playerPosition = (Position*)components.GetEntityComponentOfType(Components::Type::Position, input.entityId);
         if (playerPosition == nullptr) {
             continue;
@@ -48,6 +48,9 @@ void PlayerFiring::Update(
 
             default: {
             }
+        }
+        if (input.fireReleased) {
+            input.fire = 0;
         }
         if (
             !components.IsObstacleInTheWay(
