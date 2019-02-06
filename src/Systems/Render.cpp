@@ -35,13 +35,21 @@ void Render::Update(
         if (position == nullptr) {
             continue;
         }
-        sprites.Add(Json::Object({
+        auto sprite = Json::Object({
             {"id", tile.entityId},
             {"texture", tile.name},
             {"x", (int)position->x},
             {"y", (int)position->y},
             {"z", tile.z}
-        }));
+        });
+        const auto weapon = (Weapon*)components.GetEntityComponentOfType(Components::Type::Weapon, tile.entityId);
+        if (weapon != nullptr) {
+            sprite["motion"] = Json::Object({
+                {"dx", weapon->dx},
+                {"dy", weapon->dy},
+            });
+        }
+        sprites.Add(std::move(sprite));
     }
     message["sprites"] = std::move(sprites);
     const auto inputsInfo = components.GetComponentsOfType(Components::Type::Input);
