@@ -117,6 +117,21 @@ struct Game::Impl
         health->hp = 1;
     }
 
+    void AddGenerator(unsigned int x, unsigned int y) {
+        const auto id = components.CreateEntity();
+        const auto collider = (Collider*)components.CreateComponentOfType(Components::Type::Collider, id);
+        const auto generator = (Generator*)components.CreateComponentOfType(Components::Type::Generator, id);
+        const auto health = (Health*)components.CreateComponentOfType(Components::Type::Health, id);
+        const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
+        const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
+        tile->name = "bones";
+        tile->z = 1;
+        position->x = x;
+        position->y = y;
+        generator->spawnChance = 0.1;
+        health->hp = 10;
+    }
+
     void AddWall(unsigned int x, unsigned int y) {
         const auto id = components.CreateEntity();
         const auto collider = (Collider*)components.CreateComponentOfType(Components::Type::Collider, id);
@@ -184,6 +199,7 @@ void Game::Start(
     impl_->AddPlayer(0, 0);
     impl_->AddMonster(6, 2);
     impl_->AddMonster(1, 7);
+    impl_->AddGenerator(8, 4);
     for (int y = 0; y <= 8; ++y) {
         for (int x = 0; x <= 10; ++x) {
             if (

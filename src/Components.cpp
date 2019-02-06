@@ -5,6 +5,7 @@
 struct Components::Impl {
     int nextEntityId = 1;
     std::vector< Collider > colliders;
+    std::vector< Generator > generators;
     std::vector< Health > healths;
     std::vector< Input > inputs;
     std::vector< Monster > monsters;
@@ -25,6 +26,11 @@ auto Components::GetComponentsOfType(Type type) -> ComponentList {
         case Type::Collider: {
             list.first = impl_->colliders.data();
             list.n = impl_->colliders.size();
+        } break;
+
+        case Type::Generator: {
+            list.first = impl_->generators.data();
+            list.n = impl_->generators.size();
         } break;
 
         case Type::Health: {
@@ -65,6 +71,12 @@ Component* Components::CreateComponentOfType(Type type, int entityId) {
             const auto i = impl_->colliders.size();
             impl_->colliders.resize(i + 1);
             component = &impl_->colliders[i];
+        } break;
+
+        case Type::Generator: {
+            const auto i = impl_->generators.size();
+            impl_->generators.resize(i + 1);
+            component = &impl_->generators[i];
         } break;
 
         case Type::Health: {
@@ -112,6 +124,15 @@ Component* Components::GetEntityComponentOfType(Type type, int entityId) {
             for (size_t i = 0; i < n; ++i) {
                 if (impl_->colliders[i].entityId == entityId) {
                     return &impl_->colliders[i];
+                }
+            }
+        } break;
+
+        case Type::Generator: {
+            const auto n = impl_->generators.size();
+            for (size_t i = 0; i < n; ++i) {
+                if (impl_->generators[i].entityId == entityId) {
+                    return &impl_->generators[i];
                 }
             }
         } break;
@@ -178,6 +199,14 @@ void Components::DestroyEntity(int entityId) {
             collidersEntry = impl_->colliders.erase(collidersEntry);
         } else {
             ++collidersEntry;
+        }
+    }
+    auto generatorsEntry = impl_->generators.begin();
+    while (generatorsEntry != impl_->generators.end()) {
+        if (generatorsEntry->entityId == entityId) {
+            generatorsEntry = impl_->generators.erase(generatorsEntry);
+        } else {
+            ++generatorsEntry;
         }
     }
     auto healthsEntry = impl_->healths.begin();

@@ -2,6 +2,7 @@
 
 #include "Component.hpp"
 #include "Components/Collider.hpp"
+#include "Components/Generator.hpp"
 #include "Components/Health.hpp"
 #include "Components/Input.hpp"
 #include "Components/Monster.hpp"
@@ -15,6 +16,7 @@ class Components {
 public:
     enum class Type {
         Collider,
+        Generator,
         Health,
         Input,
         Monster,
