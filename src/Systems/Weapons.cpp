@@ -22,7 +22,7 @@ void Weapons::Update(
 ) {
     const auto weaponsInfo = components.GetComponentsOfType(Components::Type::Weapon);
     auto weapons = (Weapon*)weaponsInfo.first;
-    std::set< int > weaponsDestroyed;
+    std::set< int > entitiesDestroyed;
     for (size_t i = 0; i < weaponsInfo.n; ++i) {
         auto& weapon = weapons[i];
         const auto position = (Position*)components.GetEntityComponentOfType(Components::Type::Position, weapon.entityId);
@@ -39,17 +39,20 @@ void Weapons::Update(
         const auto y = position->y + weapon.dy;
         const auto collider = components.GetColliderAt(x, y);
         if (collider) {
-            const auto health = (Health*)components.GetEntityComponentOfType(Components::Type::Health, weapon.entityId);
+            const auto health = (Health*)components.GetEntityComponentOfType(Components::Type::Health, collider->entityId);
             if (health != nullptr) {
                 --health->hp;
+                if (health->hp <= 0) {
+                    (void)entitiesDestroyed.insert(collider->entityId);
+                }
             }
-            (void)weaponsDestroyed.insert(weapon.entityId);
+            (void)entitiesDestroyed.insert(weapon.entityId);
         } else {
             position->x = x;
             position->y = y;
         }
     }
-    for (const auto entityId: weaponsDestroyed) {
+    for (const auto entityId: entitiesDestroyed) {
         components.DestroyEntity(entityId);
     }
 }
