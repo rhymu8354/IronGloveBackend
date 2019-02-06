@@ -92,6 +92,7 @@ struct Game::Impl
     void AddPlayer(unsigned int x, unsigned int y) {
         const auto id = components.CreateEntity();
         const auto collider = (Collider*)components.CreateComponentOfType(Components::Type::Collider, id);
+        const auto health = (Health*)components.CreateComponentOfType(Components::Type::Health, id);
         const auto input = (Input*)components.CreateComponentOfType(Components::Type::Input, id);
         const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
         const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
@@ -99,11 +100,13 @@ struct Game::Impl
         tile->z = 1;
         position->x = x;
         position->y = y;
+        health->hp = 100;
     }
 
     void AddMonster(unsigned int x, unsigned int y) {
         const auto id = components.CreateEntity();
         const auto collider = (Collider*)components.CreateComponentOfType(Components::Type::Collider, id);
+        const auto health = (Health*)components.CreateComponentOfType(Components::Type::Health, id);
         const auto monster = (Monster*)components.CreateComponentOfType(Components::Type::Monster, id);
         const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
         const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
@@ -111,6 +114,8 @@ struct Game::Impl
         tile->z = 1;
         position->x = x;
         position->y = y;
+        health->hp = 1;
+    }
 
     void AddWall(unsigned int x, unsigned int y) {
         const auto id = components.CreateEntity();

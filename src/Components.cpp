@@ -5,6 +5,7 @@
 struct Components::Impl {
     int nextEntityId = 1;
     std::vector< Collider > colliders;
+    std::vector< Health > healths;
     std::vector< Input > inputs;
     std::vector< Monster > monsters;
     std::vector< Position > positions;
@@ -24,6 +25,11 @@ auto Components::GetComponentsOfType(Type type) -> ComponentList {
         case Type::Collider: {
             list.first = impl_->colliders.data();
             list.n = impl_->colliders.size();
+        } break;
+
+        case Type::Health: {
+            list.first = impl_->healths.data();
+            list.n = impl_->healths.size();
         } break;
 
         case Type::Input: {
@@ -59,6 +65,12 @@ Component* Components::CreateComponentOfType(Type type, int entityId) {
             const auto i = impl_->colliders.size();
             impl_->colliders.resize(i + 1);
             component = &impl_->colliders[i];
+        } break;
+
+        case Type::Health: {
+            const auto i = impl_->healths.size();
+            impl_->healths.resize(i + 1);
+            component = &impl_->healths[i];
         } break;
 
         case Type::Input: {
@@ -100,6 +112,15 @@ Component* Components::GetEntityComponentOfType(Type type, int entityId) {
             for (size_t i = 0; i < n; ++i) {
                 if (impl_->colliders[i].entityId == entityId) {
                     return &impl_->colliders[i];
+                }
+            }
+        } break;
+
+        case Type::Health: {
+            const auto n = impl_->healths.size();
+            for (size_t i = 0; i < n; ++i) {
+                if (impl_->healths[i].entityId == entityId) {
+                    return &impl_->healths[i];
                 }
             }
         } break;

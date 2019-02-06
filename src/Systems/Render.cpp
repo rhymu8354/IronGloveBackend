@@ -23,6 +23,9 @@ void Render::Update(
     Components& components,
     size_t tick
 ) {
+    auto message = Json::Object({
+        {"type", "render"},
+    });
     auto sprites = Json::Array({});
     const auto tilesInfo = components.GetComponentsOfType(Components::Type::Tile);
     auto tiles = (Tile*)tilesInfo.first;
@@ -40,10 +43,11 @@ void Render::Update(
             {"z", tile.z}
         }));
     }
-    impl_->ws->SendText(
-        Json::Object({
-            {"type", "render"},
-            {"sprites", std::move(sprites)},
-        }).ToEncoding()
-    );
+    message["sprites"] = std::move(sprites);
+    const auto inputsInfo = components.GetComponentsOfType(Components::Type::Input);
+    if (inputsInfo.n == 1) {
+        const auto playerHealth = (Health*)components.GetEntityComponentOfType(Components::Type::Health, inputsInfo.first[0].entityId);
+        message["health"] = playerHealth->hp;
+    }
+    impl_->ws->SendText(message.ToEncoding());
 }
