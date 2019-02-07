@@ -26,6 +26,9 @@ void PlayerFiring::Update(
         if (!input.fire) {
             continue;
         }
+        if (input.weaponInFlight) {
+            continue;
+        }
         const auto playerPosition = (Position*)components.GetEntityComponentOfType(Components::Type::Position, input.entityId);
         if (playerPosition == nullptr) {
             continue;
@@ -66,5 +69,7 @@ void PlayerFiring::Update(
         tile->z = 2;
         weaponPosition->x = playerPosition->x + dx;
         weaponPosition->y = playerPosition->y + dy;
+        weapon->ownerId = input.entityId;
+        input.weaponInFlight = true;
     }
 }

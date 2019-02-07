@@ -7,6 +7,29 @@
 
 struct Weapons::Impl {
     std::shared_ptr< WebSockets::WebSocket > ws;
+
+    void OnStrike(
+        Components& components,
+        const Weapon& weapon,
+        const Collider& victimCollider,
+        std::set< int >& entitiesDestroyed
+    ) {
+        const auto health = (Health*)components.GetEntityComponentOfType(
+            Components::Type::Health,
+            victimCollider.entityId
+        );
+        if (health != nullptr) {
+            --health->hp;
+            if (health->hp <= 0) {
+                (void)entitiesDestroyed.insert(victimCollider.entityId);
+            }
+        }
+        (void)entitiesDestroyed.insert(weapon.entityId);
+        const auto ownerInput = (Input*)components.GetEntityComponentOfType(Components::Type::Input, weapon.ownerId);
+        if (ownerInput != nullptr) {
+            ownerInput->weaponInFlight = false;
+        }
+    }
 };
 
 Weapons::~Weapons() = default;
@@ -37,27 +60,13 @@ void Weapons::Update(
         tile->name = SystemAbstractions::sprintf("axe%d", weapon.phase);
         auto collider = components.GetColliderAt(position->x, position->y);
         if (collider) {
-            const auto health = (Health*)components.GetEntityComponentOfType(Components::Type::Health, collider->entityId);
-            if (health != nullptr) {
-                --health->hp;
-                if (health->hp <= 0) {
-                    (void)entitiesDestroyed.insert(collider->entityId);
-                }
-            }
-            (void)entitiesDestroyed.insert(weapon.entityId);
+            impl_->OnStrike(components, weapon, *collider, entitiesDestroyed);
         } else {
             const auto x = position->x + weapon.dx;
             const auto y = position->y + weapon.dy;
             collider = components.GetColliderAt(x, y);
             if (collider) {
-                const auto health = (Health*)components.GetEntityComponentOfType(Components::Type::Health, collider->entityId);
-                if (health != nullptr) {
-                    --health->hp;
-                    if (health->hp <= 0) {
-                        (void)entitiesDestroyed.insert(collider->entityId);
-                    }
-                }
-                (void)entitiesDestroyed.insert(weapon.entityId);
+                impl_->OnStrike(components, weapon, *collider, entitiesDestroyed);
             } else {
                 position->x = x;
                 position->y = y;

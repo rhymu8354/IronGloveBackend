@@ -12,4 +12,5 @@ struct Input : public Component {
     char move = 0;
     bool moveReleased = false;
     bool moveThisTick = false;
+    bool weaponInFlight = false;
 };
