@@ -222,7 +222,6 @@ void Game::Start(
     impl_->AddMonster(6, 2);
     impl_->AddMonster(1, 7);
     impl_->AddGenerator(8, 4);
-    impl_->AddWeapon(6, 6);
     for (int y = 0; y <= 12; ++y) {
         for (int x = 0; x <= 14; ++x) {
             if (
