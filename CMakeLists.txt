@@ -13,6 +13,7 @@ set(Sources
     src/Components/Monster.hpp
     src/Components/Position.hpp
     src/Components/Tile.hpp
+    src/Components/Weapon.hpp
     src/Systems/AI.cpp
     src/Systems/AI.hpp
     src/Systems/Generation.cpp
