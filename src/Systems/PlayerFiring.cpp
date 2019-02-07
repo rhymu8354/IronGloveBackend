@@ -23,6 +23,9 @@ void PlayerFiring::Update(
     auto inputs = (Input*)inputsInfo.first;
     for (size_t i = 0; i < inputsInfo.n; ++i) {
         auto& input = inputs[i];
+        if (!input.fire) {
+            continue;
+        }
         const auto playerPosition = (Position*)components.GetEntityComponentOfType(Components::Type::Position, input.entityId);
         if (playerPosition == nullptr) {
             continue;
