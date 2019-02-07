@@ -14,4 +14,5 @@ struct Input : public Component {
     bool moveThisTick = false;
     bool weaponInFlight = false;
     int moveCooldown = 0;
+    bool usePotion = false;
 };

@@ -70,7 +70,8 @@ struct Game::Impl
                 input.moveThisTick = true;
                 input.move = key;
             }
-        } else if (message["type"] == "hello") {
+        } else if (message["type"] == "potion") {
+            input.usePotion = true;
         }
     }
 

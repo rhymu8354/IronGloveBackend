@@ -2,6 +2,7 @@
 
 #include <Json/Value.hpp>
 #include <memory>
+#include <set>
 #include <WebSockets/WebSocket.hpp>
 
 struct PlayerFiring::Impl {
@@ -23,14 +24,48 @@ void PlayerFiring::Update(
     auto inputs = (Input*)inputsInfo.first;
     for (size_t i = 0; i < inputsInfo.n; ++i) {
         auto& input = inputs[i];
-        if (!input.fire) {
-            continue;
-        }
-        if (input.weaponInFlight) {
+        const auto hero = (Hero*)components.GetEntityComponentOfType(
+            Components::Type::Hero,
+            input.entityId
+        );
+        if (hero == nullptr) {
             continue;
         }
         const auto playerPosition = (Position*)components.GetEntityComponentOfType(Components::Type::Position, input.entityId);
         if (playerPosition == nullptr) {
+            continue;
+        }
+        if (
+            input.usePotion
+            && (hero->potions > 0)
+        ) {
+            --hero->potions;
+            std::set< int > entitiesDestroyed;
+            const auto monstersInfo = components.GetComponentsOfType(Components::Type::Monster);
+            auto monsters = (Monster*)monstersInfo.first;
+            for (size_t i = 0; i < monstersInfo.n; ++i) {
+                const auto monsterPosition = (Position*)components.GetEntityComponentOfType(
+                    Components::Type::Position,
+                    monsters[i].entityId
+                );
+                if (monsterPosition == nullptr) {
+                    continue;
+                }
+                const int dx = (monsterPosition->x - playerPosition->x);
+                const int dy = (monsterPosition->y - playerPosition->y);
+                if (sqrt((dx * dx) + (dy * dy)) <= 5) {
+                    (void)entitiesDestroyed.insert(monsters[i].entityId);
+                }
+            }
+            for (const auto entityId: entitiesDestroyed) {
+                components.DestroyEntity(entityId);
+            }
+        }
+        input.usePotion = false;
+        if (!input.fire) {
+            continue;
+        }
+        if (input.weaponInFlight) {
             continue;
         }
         int dx = 0;
