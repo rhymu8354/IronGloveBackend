@@ -1,6 +1,7 @@
 #include "Systems.hpp"
 #include "Systems/AI.hpp"
 #include "Systems/Generation.hpp"
+#include "Systems/Hunger.hpp"
 #include "Systems/PickupSystem.hpp"
 #include "Systems/PlayerFiring.hpp"
 #include "Systems/PlayerMovement.hpp"
@@ -19,6 +20,7 @@ SystemCollection Systems(
         std::make_shared< AI >(),
         std::make_shared< Generation >(),
         std::make_shared< PickupSystem >(),
+        std::make_shared< Hunger >(),
         render,
     };
 }
