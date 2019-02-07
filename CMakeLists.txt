@@ -20,6 +20,8 @@ set(Sources
     src/Systems/AI.hpp
     src/Systems/Generation.cpp
     src/Systems/Generation.hpp
+    src/Systems/PickupSystem.cpp
+    src/Systems/PickupSystem.hpp
     src/Systems/PlayerFiring.cpp
     src/Systems/PlayerFiring.hpp
     src/Systems/PlayerMovement.cpp
