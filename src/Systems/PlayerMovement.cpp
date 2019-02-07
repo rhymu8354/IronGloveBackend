@@ -66,5 +66,9 @@ void PlayerMovement::Update(
         if (input.moveReleased) {
             input.move = 0;
         }
+        const auto tile = (Tile*)components.GetEntityComponentOfType(Components::Type::Tile, input.entityId);
+        if (tile != nullptr) {
+            tile->dirty = true;
+        }
     }
 }

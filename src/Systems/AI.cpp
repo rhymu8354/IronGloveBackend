@@ -44,6 +44,7 @@ void AI::Update(
     for (size_t i = 0; i < monstersInfo.n; ++i) {
         const auto& monster = monsters[i];
         const auto position = (Position*)components.GetEntityComponentOfType(Components::Type::Position, monster.entityId);
+        const auto tile = (Tile*)components.GetEntityComponentOfType(Components::Type::Tile, monster.entityId);
         if (position == nullptr) {
             continue;
         }
@@ -114,11 +115,21 @@ void AI::Update(
         ) {
             position->x += mx;
         }
+        if (tile != nullptr) {
+            tile->dirty = true;
+        }
     }
     for (const auto entityId: entitiesDestroyed) {
         components.DestroyEntity(entityId);
     }
     if (playerDestroyed) {
+        const auto tile = (Tile*)components.GetEntityComponentOfType(
+            Components::Type::Tile,
+            playerPosition->entityId
+        );
+        if (tile != nullptr) {
+            tile->destroyed = true;
+        }
         components.DestroyEntityComponentOfType(
             Components::Type::Position,
             playerPosition->entityId

@@ -85,6 +85,9 @@ void Weapons::Update(
             } else {
                 position->x = x;
                 position->y = y;
+                if (tile != nullptr) {
+                    tile->dirty = true;
+                }
             }
         }
     }

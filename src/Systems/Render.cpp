@@ -2,6 +2,7 @@
 
 #include <Json/Value.hpp>
 #include <memory>
+#include <set>
 #include <WebSockets/WebSocket.hpp>
 
 struct Render::Impl {
@@ -29,27 +30,37 @@ void Render::Update(
     auto sprites = Json::Array({});
     const auto tilesInfo = components.GetComponentsOfType(Components::Type::Tile);
     auto tiles = (Tile*)tilesInfo.first;
+    std::set< int > entitiesDestroyed;
     for (size_t i = 0; i < tilesInfo.n; ++i) {
-        const auto& tile = tiles[i];
-        const auto position = (Position*)components.GetEntityComponentOfType(Components::Type::Position, tile.entityId);
-        if (position == nullptr) {
-            continue;
-        }
+        auto& tile = tiles[i];
         auto sprite = Json::Object({
             {"id", tile.entityId},
-            {"texture", tile.name},
-            {"x", (int)position->x},
-            {"y", (int)position->y},
-            {"z", tile.z},
-            {"phase", tile.phase},
-            {"spinning", tile.spinning},
         });
-        const auto weapon = (Weapon*)components.GetEntityComponentOfType(Components::Type::Weapon, tile.entityId);
-        if (weapon != nullptr) {
-            sprite["motion"] = Json::Object({
-                {"dx", weapon->dx},
-                {"dy", weapon->dy},
-            });
+        if (tile.destroyed) {
+            sprite["destroyed"] = true;
+            (void)entitiesDestroyed.insert(tile.entityId);
+        } else {
+            if (!tile.dirty) {
+                continue;
+            }
+            tile.dirty = false;
+            const auto position = (Position*)components.GetEntityComponentOfType(Components::Type::Position, tile.entityId);
+            if (position == nullptr) {
+                continue;
+            }
+            sprite["texture"] = tile.name;
+            sprite["x"] = (int)position->x;
+            sprite["y"] = (int)position->y;
+            sprite["z"] = tile.z;
+            sprite["phase"] = tile.phase;
+            sprite["spinning"] = tile.spinning;
+            const auto weapon = (Weapon*)components.GetEntityComponentOfType(Components::Type::Weapon, tile.entityId);
+            if (weapon != nullptr) {
+                sprite["motion"] = Json::Object({
+                    {"dx", weapon->dx},
+                    {"dy", weapon->dy},
+                });
+            }
         }
         sprites.Add(std::move(sprite));
     }
@@ -63,4 +74,7 @@ void Render::Update(
         message["potions"] = playerHero->potions;
     }
     impl_->ws->SendText(message.ToEncoding());
+    for (const auto entityId: entitiesDestroyed) {
+        components.DestroyEntityComponentOfType(Components::Type::Tile, entityId);
+    }
 }

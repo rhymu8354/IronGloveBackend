@@ -286,8 +286,11 @@ void Components::DestroyEntity(int entityId) {
     DestroyEntityComponentOfType(Type::Pickup, entityId);
     DestroyEntityComponentOfType(Type::Position, entityId);
     DestroyEntityComponentOfType(Type::Reward, entityId);
-    DestroyEntityComponentOfType(Type::Tile, entityId);
     DestroyEntityComponentOfType(Type::Weapon, entityId);
+    const auto tile = (Tile*)GetEntityComponentOfType(Components::Type::Tile, entityId);
+    if (tile != nullptr) {
+        tile->destroyed = true;
+    }
 }
 
 void Components::DestroyEntityComponentOfType(Type type, int entityId) {

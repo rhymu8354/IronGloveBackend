@@ -78,6 +78,13 @@ void PickupSystem::Update(
         components.DestroyEntity(entityId);
     }
     if (exited) {
+        const auto tile = (Tile*)components.GetEntityComponentOfType(
+            Components::Type::Tile,
+            hero.entityId
+        );
+        if (tile != nullptr) {
+            tile->destroyed = true;
+        }
         components.DestroyEntityComponentOfType(
             Components::Type::Position,
             hero.entityId

@@ -9,4 +9,6 @@ struct Tile : public Component {
     int z = 0;
     int phase = 0;
     bool spinning = false;
+    bool dirty = true;
+    bool destroyed = false;
 };
