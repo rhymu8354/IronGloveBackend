@@ -32,10 +32,12 @@ void AI::Update(
         return;
     }
     const auto playerPosition = (Position*)components.GetEntityComponentOfType(Components::Type::Position, inputsInfo.first[0].entityId);
+    const auto playerHealth = (Health*)components.GetEntityComponentOfType(Components::Type::Health, playerPosition->entityId);
     const auto collidersInfo = components.GetComponentsOfType(Components::Type::Collider);
     const auto monstersInfo = components.GetComponentsOfType(Components::Type::Monster);
     auto monsters = (Monster*)monstersInfo.first;
-    std::set< int > monstersKilled;
+    std::set< int > entitiesDestroyed;
+    bool playerDestroyed = false;
     for (size_t i = 0; i < monstersInfo.n; ++i) {
         const auto& monster = monsters[i];
         const auto position = (Position*)components.GetEntityComponentOfType(Components::Type::Position, monster.entityId);
@@ -66,13 +68,17 @@ void AI::Update(
                 && (position->y + my == playerPosition->y)
             )
         ) {
-            const auto playerHealth = (Health*)components.GetEntityComponentOfType(Components::Type::Health, playerPosition->entityId);
             if (playerHealth != nullptr) {
-                playerHealth->hp -= 10;
+                if (!playerDestroyed) {
+                    playerHealth->hp -= 10;
+                    if (playerHealth->hp <= 0) {
+                        playerDestroyed = true;
+                    }
+                }
                 const auto monsterHealth = (Health*)components.GetEntityComponentOfType(Components::Type::Health, monster.entityId);
                 if (monsterHealth != nullptr) {
                     monsterHealth->hp = 0;
-                    (void)monstersKilled.insert(monster.entityId);
+                    (void)entitiesDestroyed.insert(monster.entityId);
                 }
                 continue;
             }
@@ -101,7 +107,13 @@ void AI::Update(
             position->x += mx;
         }
     }
-    for (const auto entityId: monstersKilled) {
+    for (const auto entityId: entitiesDestroyed) {
         components.DestroyEntity(entityId);
+    }
+    if (playerDestroyed) {
+        components.DestroyEntityComponentOfType(
+            Components::Type::Position,
+            playerPosition->entityId
+        );
     }
 }
