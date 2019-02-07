@@ -171,7 +171,7 @@ struct Game::Impl
         auto workerToldToStop = stopWorker.get_future();
         size_t tick = 0;
         while (
-            workerToldToStop.wait_for(std::chrono::milliseconds(100))
+            workerToldToStop.wait_for(std::chrono::milliseconds(1000/10))
             != std::future_status::ready
         ) {
             ++tick;
