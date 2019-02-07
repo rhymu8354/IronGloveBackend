@@ -12,6 +12,7 @@ struct Components::Impl {
     std::vector< Monster > monsters;
     std::vector< Pickup > pickups;
     std::vector< Position > positions;
+    std::vector< Reward > rewards;
     std::vector< Tile > tiles;
     std::vector< Weapon > weapons;
 };
@@ -64,6 +65,11 @@ auto Components::GetComponentsOfType(Type type) -> ComponentList {
         case Type::Position: {
             list.first = impl_->positions.data();
             list.n = impl_->positions.size();
+        } break;
+
+        case Type::Reward: {
+            list.first = impl_->rewards.data();
+            list.n = impl_->rewards.size();
         } break;
 
         case Type::Tile: {
@@ -131,6 +137,12 @@ Component* Components::CreateComponentOfType(Type type, int entityId) {
             const auto i = impl_->positions.size();
             impl_->positions.resize(i + 1);
             component = &impl_->positions[i];
+        } break;
+
+        case Type::Reward: {
+            const auto i = impl_->rewards.size();
+            impl_->rewards.resize(i + 1);
+            component = &impl_->rewards[i];
         } break;
 
         case Type::Tile: {
@@ -227,6 +239,15 @@ Component* Components::GetEntityComponentOfType(Type type, int entityId) {
             }
         } break;
 
+        case Type::Reward: {
+            const auto n = impl_->rewards.size();
+            for (size_t i = 0; i < n; ++i) {
+                if (impl_->rewards[i].entityId == entityId) {
+                    return &impl_->rewards[i];
+                }
+            }
+        } break;
+
         case Type::Tile: {
             const auto n = impl_->tiles.size();
             for (size_t i = 0; i < n; ++i) {
@@ -264,6 +285,7 @@ void Components::DestroyEntity(int entityId) {
     DestroyEntityComponentOfType(Type::Monster, entityId);
     DestroyEntityComponentOfType(Type::Pickup, entityId);
     DestroyEntityComponentOfType(Type::Position, entityId);
+    DestroyEntityComponentOfType(Type::Reward, entityId);
     DestroyEntityComponentOfType(Type::Tile, entityId);
     DestroyEntityComponentOfType(Type::Weapon, entityId);
 }
@@ -362,6 +384,18 @@ void Components::DestroyEntityComponentOfType(Type type, int entityId) {
                     break;
                 } else {
                     ++positionsEntry;
+                }
+            }
+        } break;
+
+        case Type::Reward: {
+            auto rewardsEntry = impl_->rewards.begin();
+            while (rewardsEntry != impl_->rewards.end()) {
+                if (rewardsEntry->entityId == entityId) {
+                    rewardsEntry = impl_->rewards.erase(rewardsEntry);
+                    break;
+                } else {
+                    ++rewardsEntry;
                 }
             }
         } break;

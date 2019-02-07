@@ -20,12 +20,14 @@ namespace {
         const auto monster = (Monster*)components.CreateComponentOfType(Components::Type::Monster, id);
         const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
         const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
+        const auto reward = (Reward*)components.CreateComponentOfType(Components::Type::Reward, id);
         collider->mask = 2;
         tile->name = "monster";
         tile->z = 1;
         position->x = x;
         position->y = y;
         health->hp = 1;
+        reward->score = 10;
     }
 
 }

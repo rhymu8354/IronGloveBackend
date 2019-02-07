@@ -9,6 +9,7 @@
 #include "Components/Monster.hpp"
 #include "Components/Pickup.hpp"
 #include "Components/Position.hpp"
+#include "Components/Reward.hpp"
 #include "Components/Tile.hpp"
 #include "Components/Weapon.hpp"
 
@@ -26,6 +27,7 @@ public:
         Monster,
         Pickup,
         Position,
+        Reward,
         Tile,
         Weapon,
     };

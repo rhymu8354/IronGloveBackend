@@ -14,6 +14,7 @@ set(Sources
     src/Components/Monster.hpp
     src/Components/Pickup.hpp
     src/Components/Position.hpp
+    src/Components/Reward.hpp
     src/Components/Tile.hpp
     src/Components/Weapon.hpp
     src/Systems/AI.cpp

@@ -125,12 +125,14 @@ struct Game::Impl
         const auto monster = (Monster*)components.CreateComponentOfType(Components::Type::Monster, id);
         const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
         const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
+        const auto reward = (Reward*)components.CreateComponentOfType(Components::Type::Reward, id);
         collider->mask = 2;
         tile->name = "monster";
         tile->z = 2;
         position->x = x;
         position->y = y;
         health->hp = 1;
+        reward->score = 10;
     }
 
     void AddGenerator(unsigned int x, unsigned int y) {
@@ -140,6 +142,7 @@ struct Game::Impl
         const auto health = (Health*)components.CreateComponentOfType(Components::Type::Health, id);
         const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
         const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
+        const auto reward = (Reward*)components.CreateComponentOfType(Components::Type::Reward, id);
         collider->mask = ~0;
         tile->name = "bones";
         tile->z = 1;
@@ -147,6 +150,7 @@ struct Game::Impl
         position->y = y;
         generator->spawnChance = 0.05;
         health->hp = 10;
+        reward->score = 250;
     }
 
     void AddWall(unsigned int x, unsigned int y) {

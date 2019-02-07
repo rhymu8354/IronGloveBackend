@@ -14,18 +14,35 @@ struct Weapons::Impl {
         const Collider& victimCollider,
         std::set< int >& entitiesDestroyed
     ) {
+        const auto ownerInput = (Input*)components.GetEntityComponentOfType(
+            Components::Type::Input,
+            weapon.ownerId
+        );
+        const auto ownerHero = (Hero*)components.GetEntityComponentOfType(
+            Components::Type::Hero,
+            weapon.ownerId
+        );
         const auto health = (Health*)components.GetEntityComponentOfType(
             Components::Type::Health,
+            victimCollider.entityId
+        );
+        const auto reward = (Reward*)components.GetEntityComponentOfType(
+            Components::Type::Reward,
             victimCollider.entityId
         );
         if (health != nullptr) {
             --health->hp;
             if (health->hp <= 0) {
                 (void)entitiesDestroyed.insert(victimCollider.entityId);
+                if (
+                    (ownerHero != nullptr)
+                    && (reward != nullptr)
+                ) {
+                    ownerHero->score += reward->score;
+                }
             }
         }
         (void)entitiesDestroyed.insert(weapon.entityId);
-        const auto ownerInput = (Input*)components.GetEntityComponentOfType(Components::Type::Input, weapon.ownerId);
         if (ownerInput != nullptr) {
             ownerInput->weaponInFlight = false;
         }

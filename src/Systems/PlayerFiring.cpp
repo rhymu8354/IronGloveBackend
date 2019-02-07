@@ -31,7 +31,10 @@ void PlayerFiring::Update(
         if (hero == nullptr) {
             continue;
         }
-        const auto playerPosition = (Position*)components.GetEntityComponentOfType(Components::Type::Position, input.entityId);
+        const auto playerPosition = (Position*)components.GetEntityComponentOfType(
+            Components::Type::Position,
+            input.entityId
+        );
         if (playerPosition == nullptr) {
             continue;
         }
@@ -54,7 +57,14 @@ void PlayerFiring::Update(
                 const int dx = (monsterPosition->x - playerPosition->x);
                 const int dy = (monsterPosition->y - playerPosition->y);
                 if (sqrt((dx * dx) + (dy * dy)) <= 5) {
+                    const auto reward = (Reward*)components.GetEntityComponentOfType(
+                        Components::Type::Reward,
+                        monsters[i].entityId
+                    );
                     (void)entitiesDestroyed.insert(monsters[i].entityId);
+                    if (reward != nullptr) {
+                        hero->score += reward->score;
+                    }
                 }
             }
             for (const auto entityId: entitiesDestroyed) {
