@@ -47,6 +47,8 @@ void AI::Update(
         if (position == nullptr) {
             continue;
         }
+        const auto collider = (Collider*)components.GetEntityComponentOfType(Components::Type::Collider, monster.entityId);
+        const auto mask = ((collider == nullptr) ? 0 : collider->mask);
         const auto dx = abs(position->x - playerPosition->x);
         const auto dy = abs(position->y - playerPosition->y);
         int mx = 0;
@@ -90,21 +92,24 @@ void AI::Update(
             (dx > dy)
             && !components.IsObstacleInTheWay(
                 position->x + mx,
-                position->y
+                position->y,
+                mask
             )
         ) {
             position->x += mx;
         } else if (
             !components.IsObstacleInTheWay(
                 position->x,
-                position->y + my
+                position->y + my,
+                mask
             )
         ) {
             position->y += my;
         } else if (
             !components.IsObstacleInTheWay(
                 position->x + mx,
-                position->y
+                position->y,
+                mask
             )
         ) {
             position->x += mx;

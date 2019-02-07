@@ -6,4 +6,5 @@
 #include <WebSockets/WebSocket.hpp>
 
 struct Collider : public Component {
+    int mask = 0;
 };

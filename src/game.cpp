@@ -108,6 +108,7 @@ struct Game::Impl
         const auto input = (Input*)components.CreateComponentOfType(Components::Type::Input, id);
         const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
         const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
+        collider->mask = 1;
         tile->name = "hero";
         tile->z = 2;
         position->x = x;
@@ -124,6 +125,7 @@ struct Game::Impl
         const auto monster = (Monster*)components.CreateComponentOfType(Components::Type::Monster, id);
         const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
         const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
+        collider->mask = 2;
         tile->name = "monster";
         tile->z = 2;
         position->x = x;
@@ -138,6 +140,7 @@ struct Game::Impl
         const auto health = (Health*)components.CreateComponentOfType(Components::Type::Health, id);
         const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
         const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
+        collider->mask = ~0;
         tile->name = "bones";
         tile->z = 1;
         position->x = x;
@@ -151,6 +154,7 @@ struct Game::Impl
         const auto collider = (Collider*)components.CreateComponentOfType(Components::Type::Collider, id);
         const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
         const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
+        collider->mask = ~0;
         tile->name = "wall";
         tile->z = 1;
         position->x = x;

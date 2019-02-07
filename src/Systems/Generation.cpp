@@ -20,6 +20,7 @@ namespace {
         const auto monster = (Monster*)components.CreateComponentOfType(Components::Type::Monster, id);
         const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
         const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
+        collider->mask = 2;
         tile->name = "monster";
         tile->z = 1;
         position->x = x;
@@ -64,7 +65,7 @@ void Generation::Update(
             } else {
                 y += 2 * (d % 2) - 1;
             }
-            if (!components.IsObstacleInTheWay(x, y)) {
+            if (!components.IsObstacleInTheWay(x, y, ~0)) {
                 AddMonster(components, x, y);
             }
         }

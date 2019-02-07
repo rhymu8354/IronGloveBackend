@@ -395,7 +395,7 @@ void Components::DestroyEntityComponentOfType(Type type, int entityId) {
     }
 }
 
-bool Components::IsObstacleInTheWay(int x, int y) {
+bool Components::IsObstacleInTheWay(int x, int y, int mask) {
     for (size_t i = 0; i < impl_->colliders.size(); ++i) {
         const auto& collider = impl_->colliders[i];
         const auto position = (Position*)GetEntityComponentOfType(Components::Type::Position, collider.entityId);
@@ -405,6 +405,7 @@ bool Components::IsObstacleInTheWay(int x, int y) {
         if (
             (position->x == x)
             && (position->y == y)
+            && ((mask & collider.mask) != 0)
         ) {
             return true;
         }

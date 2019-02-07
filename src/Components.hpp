@@ -56,7 +56,7 @@ public:
     int CreateEntity();
     void DestroyEntity(int entityId);
     void DestroyEntityComponentOfType(Type type, int entityId);
-    bool IsObstacleInTheWay(int x, int y);
+    bool IsObstacleInTheWay(int x, int y, int mask);
     Collider* GetColliderAt(int x, int y);
 
     // Private properties

@@ -31,27 +31,29 @@ void PlayerMovement::Update(
         if (position == nullptr) {
             continue;
         }
+        const auto collider = (Collider*)components.GetEntityComponentOfType(Components::Type::Collider, input.entityId);
+        const auto mask = ((collider == nullptr) ? 0 : collider->mask);
         switch (input.move) {
             case 'j': {
-                if (!components.IsObstacleInTheWay(position->x - 1, position->y)) {
+                if (!components.IsObstacleInTheWay(position->x - 1, position->y, mask)) {
                     --position->x;
                 }
             } break;
 
             case 'l': {
-                if (!components.IsObstacleInTheWay(position->x + 1, position->y)) {
+                if (!components.IsObstacleInTheWay(position->x + 1, position->y, mask)) {
                     ++position->x;
                 }
             } break;
 
             case 'i': {
-                if (!components.IsObstacleInTheWay(position->x, position->y - 1)) {
+                if (!components.IsObstacleInTheWay(position->x, position->y - 1, mask)) {
                     --position->y;
                 }
             } break;
 
             case 'k': {
-                if (!components.IsObstacleInTheWay(position->x, position->y + 1)) {
+                if (!components.IsObstacleInTheWay(position->x, position->y + 1, mask)) {
                     ++position->y;
                 }
             } break;
