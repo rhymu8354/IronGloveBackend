@@ -78,13 +78,13 @@ void AI::Update(
                         playerDestroyed = true;
                     }
                 }
-                const auto monsterHealth = (Health*)components.GetEntityComponentOfType(Components::Type::Health, monster.entityId);
-                if (monsterHealth != nullptr) {
-                    monsterHealth->hp = 0;
-                    (void)entitiesDestroyed.insert(monster.entityId);
-                }
-                continue;
             }
+            const auto monsterHealth = (Health*)components.GetEntityComponentOfType(Components::Type::Health, monster.entityId);
+            if (monsterHealth != nullptr) {
+                monsterHealth->hp = 0;
+                (void)entitiesDestroyed.insert(monster.entityId);
+            }
+            continue;
         }
         if (
             (dx > dy)
