@@ -103,14 +103,17 @@ struct Game::Impl
         const auto id = components.CreateEntity();
         const auto collider = (Collider*)components.CreateComponentOfType(Components::Type::Collider, id);
         const auto health = (Health*)components.CreateComponentOfType(Components::Type::Health, id);
+        const auto hero = (Hero*)components.CreateComponentOfType(Components::Type::Hero, id);
         const auto input = (Input*)components.CreateComponentOfType(Components::Type::Input, id);
         const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
         const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
         tile->name = "hero";
-        tile->z = 1;
+        tile->z = 2;
         position->x = x;
         position->y = y;
         health->hp = 100;
+        hero->score = 0;
+        hero->potions = 0;
     }
 
     void AddMonster(unsigned int x, unsigned int y) {
@@ -121,7 +124,7 @@ struct Game::Impl
         const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
         const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
         tile->name = "monster";
-        tile->z = 1;
+        tile->z = 2;
         position->x = x;
         position->y = y;
         health->hp = 1;
@@ -161,6 +164,42 @@ struct Game::Impl
         tile->z = 0;
         position->x = x;
         position->y = y;
+    }
+
+    void AddTreasure(unsigned int x, unsigned int y) {
+        const auto id = components.CreateEntity();
+        const auto pickup = (Pickup*)components.CreateComponentOfType(Components::Type::Pickup, id);
+        const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
+        const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
+        tile->name = "treasure";
+        tile->z = 1;
+        position->x = x;
+        position->y = y;
+        pickup->type = Pickup::Type::Treasure;
+    }
+
+    void AddFood(unsigned int x, unsigned int y) {
+        const auto id = components.CreateEntity();
+        const auto pickup = (Pickup*)components.CreateComponentOfType(Components::Type::Pickup, id);
+        const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
+        const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
+        tile->name = "food";
+        tile->z = 1;
+        position->x = x;
+        position->y = y;
+        pickup->type = Pickup::Type::Food;
+    }
+
+    void AddPotion(unsigned int x, unsigned int y) {
+        const auto id = components.CreateEntity();
+        const auto pickup = (Pickup*)components.CreateComponentOfType(Components::Type::Pickup, id);
+        const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
+        const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
+        tile->name = "potion";
+        tile->z = 1;
+        position->x = x;
+        position->y = y;
+        pickup->type = Pickup::Type::Potion;
     }
 
     void Worker() {
@@ -210,6 +249,13 @@ void Game::Start(
     impl_->AddMonster(6, 2);
     impl_->AddMonster(1, 7);
     impl_->AddGenerator(8, 4);
+    impl_->AddTreasure(2, 10);
+    impl_->AddTreasure(3, 10);
+    impl_->AddTreasure(3, 11);
+    impl_->AddTreasure(8, 8);
+    impl_->AddTreasure(9, 8);
+    impl_->AddFood(12, 9);
+    impl_->AddPotion(6, 6);
     for (int y = 0; y <= 12; ++y) {
         for (int x = 0; x <= 14; ++x) {
             if (

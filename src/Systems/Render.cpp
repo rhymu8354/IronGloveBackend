@@ -56,7 +56,10 @@ void Render::Update(
     const auto inputsInfo = components.GetComponentsOfType(Components::Type::Input);
     if (inputsInfo.n == 1) {
         const auto playerHealth = (Health*)components.GetEntityComponentOfType(Components::Type::Health, inputsInfo.first[0].entityId);
+        const auto playerHero = (Hero*)components.GetEntityComponentOfType(Components::Type::Hero, inputsInfo.first[0].entityId);
         message["health"] = playerHealth->hp;
+        message["score"] = playerHero->score;
+        message["potions"] = playerHero->potions;
     }
     impl_->ws->SendText(message.ToEncoding());
 }
