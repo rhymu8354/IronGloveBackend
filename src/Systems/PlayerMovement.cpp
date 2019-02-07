@@ -19,13 +19,14 @@ void PlayerMovement::Update(
     Components& components,
     size_t tick
 ) {
-    if ((tick % 2) != 0) {
-        return;
-    }
     const auto inputsInfo = components.GetComponentsOfType(Components::Type::Input);
     auto inputs = (Input*)inputsInfo.first;
     for (size_t i = 0; i < inputsInfo.n; ++i) {
         auto& input = inputs[i];
+        if (input.moveCooldown) {
+            --input.moveCooldown;
+            continue;
+        }
         const auto position = (Position*)components.GetEntityComponentOfType(Components::Type::Position, input.entityId);
         if (position == nullptr) {
             continue;
@@ -58,6 +59,7 @@ void PlayerMovement::Update(
             default: {
             }
         }
+        input.moveCooldown = 1;
         input.moveThisTick = false;
         if (input.moveReleased) {
             input.move = 0;
