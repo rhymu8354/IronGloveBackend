@@ -56,22 +56,15 @@ void PlayerFiring::Update(
         if (input.fireReleased) {
             input.fire = 0;
         }
-        if (
-            !components.IsObstacleInTheWay(
-                playerPosition->x + dx,
-                playerPosition->y + dy
-            )
-        ) {
-            const auto id = components.CreateEntity();
-            const auto weapon = (Weapon*)components.CreateComponentOfType(Components::Type::Weapon, id);
-            const auto weaponPosition = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
-            const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
-            weapon->dx = dx;
-            weapon->dy = dy;
-            tile->name = "axe0";
-            tile->z = 2;
-            weaponPosition->x = playerPosition->x + dx;
-            weaponPosition->y = playerPosition->y + dy;
-        }
+        const auto id = components.CreateEntity();
+        const auto weapon = (Weapon*)components.CreateComponentOfType(Components::Type::Weapon, id);
+        const auto weaponPosition = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
+        const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
+        weapon->dx = dx;
+        weapon->dy = dy;
+        tile->name = "axe0";
+        tile->z = 2;
+        weaponPosition->x = playerPosition->x + dx;
+        weaponPosition->y = playerPosition->y + dy;
     }
 }
