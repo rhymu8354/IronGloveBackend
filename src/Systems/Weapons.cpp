@@ -49,11 +49,7 @@ void Weapons::Update(
     for (size_t i = 0; i < weaponsInfo.n; ++i) {
         auto& weapon = weapons[i];
         const auto position = (Position*)components.GetEntityComponentOfType(Components::Type::Position, weapon.entityId);
-        const auto tile = (Tile*)components.GetEntityComponentOfType(Components::Type::Tile, weapon.entityId);
-        if (
-            (position == nullptr)
-            || (tile == nullptr)
-        ) {
+        if (position == nullptr) {
             continue;
         }
         weapon.phase = ((weapon.phase + 1) % 4);
