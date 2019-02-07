@@ -163,18 +163,6 @@ struct Game::Impl
         position->y = y;
     }
 
-    void AddWeapon(unsigned int x, unsigned int y) {
-        const auto id = components.CreateEntity();
-        const auto weapon = (Weapon*)components.CreateComponentOfType(Components::Type::Weapon, id);
-        const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
-        const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
-        weapon->dx = 1;
-        tile->name = "axe0";
-        tile->z = 2;
-        position->x = x;
-        position->y = y;
-    }
-
     void Worker() {
         diagnosticsSender.SendDiagnosticInformationString(
             3,
