@@ -4,8 +4,10 @@
 #include "Components/Collider.hpp"
 #include "Components/Generator.hpp"
 #include "Components/Health.hpp"
+#include "Components/Hero.hpp"
 #include "Components/Input.hpp"
 #include "Components/Monster.hpp"
+#include "Components/Pickup.hpp"
 #include "Components/Position.hpp"
 #include "Components/Tile.hpp"
 #include "Components/Weapon.hpp"
@@ -19,8 +21,10 @@ public:
         Collider,
         Generator,
         Health,
+        Hero,
         Input,
         Monster,
+        Pickup,
         Position,
         Tile,
         Weapon,
@@ -51,6 +55,7 @@ public:
     Component* GetEntityComponentOfType(Type type, int entityId);
     int CreateEntity();
     void DestroyEntity(int entityId);
+    void DestroyEntityComponentOfType(Type type, int entityId);
     bool IsObstacleInTheWay(int x, int y);
     Collider* GetColliderAt(int x, int y);
 

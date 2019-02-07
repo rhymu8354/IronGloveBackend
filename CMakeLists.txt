@@ -9,8 +9,10 @@ set(Sources
     src/Components/Collider.hpp
     src/Components/Generator.hpp
     src/Components/Health.hpp
+    src/Components/Hero.hpp
     src/Components/Input.hpp
     src/Components/Monster.hpp
+    src/Components/Pickup.hpp
     src/Components/Position.hpp
     src/Components/Tile.hpp
     src/Components/Weapon.hpp

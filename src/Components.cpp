@@ -7,8 +7,10 @@ struct Components::Impl {
     std::vector< Collider > colliders;
     std::vector< Generator > generators;
     std::vector< Health > healths;
+    std::vector< Hero > heroes;
     std::vector< Input > inputs;
     std::vector< Monster > monsters;
+    std::vector< Pickup > pickups;
     std::vector< Position > positions;
     std::vector< Tile > tiles;
     std::vector< Weapon > weapons;
@@ -39,6 +41,11 @@ auto Components::GetComponentsOfType(Type type) -> ComponentList {
             list.n = impl_->healths.size();
         } break;
 
+        case Type::Hero: {
+            list.first = impl_->heroes.data();
+            list.n = impl_->heroes.size();
+        } break;
+
         case Type::Input: {
             list.first = impl_->inputs.data();
             list.n = impl_->inputs.size();
@@ -47,6 +54,11 @@ auto Components::GetComponentsOfType(Type type) -> ComponentList {
         case Type::Monster: {
             list.first = impl_->monsters.data();
             list.n = impl_->monsters.size();
+        } break;
+
+        case Type::Pickup: {
+            list.first = impl_->pickups.data();
+            list.n = impl_->pickups.size();
         } break;
 
         case Type::Position: {
@@ -91,6 +103,12 @@ Component* Components::CreateComponentOfType(Type type, int entityId) {
             component = &impl_->healths[i];
         } break;
 
+        case Type::Hero: {
+            const auto i = impl_->heroes.size();
+            impl_->heroes.resize(i + 1);
+            component = &impl_->heroes[i];
+        } break;
+
         case Type::Input: {
             const auto i = impl_->inputs.size();
             impl_->inputs.resize(i + 1);
@@ -101,6 +119,12 @@ Component* Components::CreateComponentOfType(Type type, int entityId) {
             const auto i = impl_->monsters.size();
             impl_->monsters.resize(i + 1);
             component = &impl_->monsters[i];
+        } break;
+
+        case Type::Pickup: {
+            const auto i = impl_->pickups.size();
+            impl_->pickups.resize(i + 1);
+            component = &impl_->pickups[i];
         } break;
 
         case Type::Position: {
@@ -158,6 +182,15 @@ Component* Components::GetEntityComponentOfType(Type type, int entityId) {
             }
         } break;
 
+        case Type::Hero: {
+            const auto n = impl_->heroes.size();
+            for (size_t i = 0; i < n; ++i) {
+                if (impl_->heroes[i].entityId == entityId) {
+                    return &impl_->heroes[i];
+                }
+            }
+        } break;
+
         case Type::Input: {
             const auto n = impl_->inputs.size();
             for (size_t i = 0; i < n; ++i) {
@@ -172,6 +205,15 @@ Component* Components::GetEntityComponentOfType(Type type, int entityId) {
             for (size_t i = 0; i < n; ++i) {
                 if (impl_->monsters[i].entityId == entityId) {
                     return &impl_->monsters[i];
+                }
+            }
+        } break;
+
+        case Type::Pickup: {
+            const auto n = impl_->pickups.size();
+            for (size_t i = 0; i < n; ++i) {
+                if (impl_->pickups[i].entityId == entityId) {
+                    return &impl_->pickups[i];
                 }
             }
         } break;
@@ -214,68 +256,141 @@ int Components::CreateEntity() {
 }
 
 void Components::DestroyEntity(int entityId) {
-    auto collidersEntry = impl_->colliders.begin();
-    while (collidersEntry != impl_->colliders.end()) {
-        if (collidersEntry->entityId == entityId) {
-            collidersEntry = impl_->colliders.erase(collidersEntry);
-        } else {
-            ++collidersEntry;
-        }
-    }
-    auto generatorsEntry = impl_->generators.begin();
-    while (generatorsEntry != impl_->generators.end()) {
-        if (generatorsEntry->entityId == entityId) {
-            generatorsEntry = impl_->generators.erase(generatorsEntry);
-        } else {
-            ++generatorsEntry;
-        }
-    }
-    auto healthsEntry = impl_->healths.begin();
-    while (healthsEntry != impl_->healths.end()) {
-        if (healthsEntry->entityId == entityId) {
-            healthsEntry = impl_->healths.erase(healthsEntry);
-        } else {
-            ++healthsEntry;
-        }
-    }
-    auto inputsEntry = impl_->inputs.begin();
-    while (inputsEntry != impl_->inputs.end()) {
-        if (inputsEntry->entityId == entityId) {
-            inputsEntry = impl_->inputs.erase(inputsEntry);
-        } else {
-            ++inputsEntry;
-        }
-    }
-    auto monstersEntry = impl_->monsters.begin();
-    while (monstersEntry != impl_->monsters.end()) {
-        if (monstersEntry->entityId == entityId) {
-            monstersEntry = impl_->monsters.erase(monstersEntry);
-        } else {
-            ++monstersEntry;
-        }
-    }
-    auto positionsEntry = impl_->positions.begin();
-    while (positionsEntry != impl_->positions.end()) {
-        if (positionsEntry->entityId == entityId) {
-            positionsEntry = impl_->positions.erase(positionsEntry);
-        } else {
-            ++positionsEntry;
-        }
-    }
-    auto tilesEntry = impl_->tiles.begin();
-    while (tilesEntry != impl_->tiles.end()) {
-        if (tilesEntry->entityId == entityId) {
-            tilesEntry = impl_->tiles.erase(tilesEntry);
-        } else {
-            ++tilesEntry;
-        }
-    }
-    auto weaponsEntry = impl_->weapons.begin();
-    while (weaponsEntry != impl_->weapons.end()) {
-        if (weaponsEntry->entityId == entityId) {
-            weaponsEntry = impl_->weapons.erase(weaponsEntry);
-        } else {
-            ++weaponsEntry;
+    DestroyEntityComponentOfType(Type::Collider, entityId);
+    DestroyEntityComponentOfType(Type::Generator, entityId);
+    DestroyEntityComponentOfType(Type::Health, entityId);
+    DestroyEntityComponentOfType(Type::Hero, entityId);
+    DestroyEntityComponentOfType(Type::Input, entityId);
+    DestroyEntityComponentOfType(Type::Monster, entityId);
+    DestroyEntityComponentOfType(Type::Pickup, entityId);
+    DestroyEntityComponentOfType(Type::Position, entityId);
+    DestroyEntityComponentOfType(Type::Tile, entityId);
+    DestroyEntityComponentOfType(Type::Weapon, entityId);
+}
+
+void Components::DestroyEntityComponentOfType(Type type, int entityId) {
+    switch (type) {
+        case Type::Collider: {
+            auto collidersEntry = impl_->colliders.begin();
+            while (collidersEntry != impl_->colliders.end()) {
+                if (collidersEntry->entityId == entityId) {
+                    collidersEntry = impl_->colliders.erase(collidersEntry);
+                    break;
+                } else {
+                    ++collidersEntry;
+                }
+            }
+        } break;
+
+        case Type::Generator: {
+            auto generatorsEntry = impl_->generators.begin();
+            while (generatorsEntry != impl_->generators.end()) {
+                if (generatorsEntry->entityId == entityId) {
+                    generatorsEntry = impl_->generators.erase(generatorsEntry);
+                    break;
+                } else {
+                    ++generatorsEntry;
+                }
+            }
+        } break;
+
+        case Type::Health: {
+            auto healthsEntry = impl_->healths.begin();
+            while (healthsEntry != impl_->healths.end()) {
+                if (healthsEntry->entityId == entityId) {
+                    healthsEntry = impl_->healths.erase(healthsEntry);
+                    break;
+                } else {
+                    ++healthsEntry;
+                }
+            }
+        } break;
+
+        case Type::Hero: {
+            auto heroesEntry = impl_->heroes.begin();
+            while (heroesEntry != impl_->heroes.end()) {
+                if (heroesEntry->entityId == entityId) {
+                    heroesEntry = impl_->heroes.erase(heroesEntry);
+                    break;
+                } else {
+                    ++heroesEntry;
+                }
+            }
+        } break;
+
+        case Type::Input: {
+            auto inputsEntry = impl_->inputs.begin();
+            while (inputsEntry != impl_->inputs.end()) {
+                if (inputsEntry->entityId == entityId) {
+                    inputsEntry = impl_->inputs.erase(inputsEntry);
+                    break;
+                } else {
+                    ++inputsEntry;
+                }
+            }
+        } break;
+
+        case Type::Monster: {
+            auto monstersEntry = impl_->monsters.begin();
+            while (monstersEntry != impl_->monsters.end()) {
+                if (monstersEntry->entityId == entityId) {
+                    monstersEntry = impl_->monsters.erase(monstersEntry);
+                    break;
+                } else {
+                    ++monstersEntry;
+                }
+            }
+        } break;
+
+        case Type::Pickup: {
+            auto pickupsEntry = impl_->pickups.begin();
+            while (pickupsEntry != impl_->pickups.end()) {
+                if (pickupsEntry->entityId == entityId) {
+                    pickupsEntry = impl_->pickups.erase(pickupsEntry);
+                    break;
+                } else {
+                    ++pickupsEntry;
+                }
+            }
+        } break;
+
+        case Type::Position: {
+            auto positionsEntry = impl_->positions.begin();
+            while (positionsEntry != impl_->positions.end()) {
+                if (positionsEntry->entityId == entityId) {
+                    positionsEntry = impl_->positions.erase(positionsEntry);
+                    break;
+                } else {
+                    ++positionsEntry;
+                }
+            }
+        } break;
+
+        case Type::Tile: {
+            auto tilesEntry = impl_->tiles.begin();
+            while (tilesEntry != impl_->tiles.end()) {
+                if (tilesEntry->entityId == entityId) {
+                    tilesEntry = impl_->tiles.erase(tilesEntry);
+                    break;
+                } else {
+                    ++tilesEntry;
+                }
+            }
+        } break;
+
+        case Type::Weapon: {
+            auto weaponsEntry = impl_->weapons.begin();
+            while (weaponsEntry != impl_->weapons.end()) {
+                if (weaponsEntry->entityId == entityId) {
+                    weaponsEntry = impl_->weapons.erase(weaponsEntry);
+                    break;
+                } else {
+                    ++weaponsEntry;
+                }
+            }
+        } break;
+
+        default: {
         }
     }
 }
