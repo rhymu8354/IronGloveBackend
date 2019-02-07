@@ -112,6 +112,7 @@ void PlayerFiring::Update(
         weapon->dy = dy;
         tile->name = "axe";
         tile->z = 2;
+        tile->spinning = true;
         weaponPosition->x = playerPosition->x + dx;
         weaponPosition->y = playerPosition->y + dy;
         weapon->ownerId = input.entityId;

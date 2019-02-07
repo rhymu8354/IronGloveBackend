@@ -69,7 +69,10 @@ void Weapons::Update(
         if (position == nullptr) {
             continue;
         }
-        weapon.phase = ((weapon.phase + 1) % 4);
+        const auto tile = (Tile*)components.GetEntityComponentOfType(Components::Type::Tile, weapon.entityId);
+        if (tile != nullptr) {
+            tile->phase = ((tile->phase + 1) % 4);
+        }
         auto collider = components.GetColliderAt(position->x, position->y);
         if (collider) {
             impl_->OnStrike(components, weapon, *collider, entitiesDestroyed);
