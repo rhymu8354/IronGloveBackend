@@ -32,6 +32,9 @@ void AI::Update(
         return;
     }
     const auto playerPosition = (Position*)components.GetEntityComponentOfType(Components::Type::Position, inputsInfo.first[0].entityId);
+    if (playerPosition == nullptr) {
+        return;
+    }
     const auto playerHealth = (Health*)components.GetEntityComponentOfType(Components::Type::Health, playerPosition->entityId);
     const auto collidersInfo = components.GetComponentsOfType(Components::Type::Collider);
     const auto monstersInfo = components.GetComponentsOfType(Components::Type::Monster);
