@@ -52,6 +52,7 @@ void PlayerFiring::Update(
             default: {
             }
         }
+        input.fireThisTick = false;
         if (input.fireReleased) {
             input.fire = 0;
         }
