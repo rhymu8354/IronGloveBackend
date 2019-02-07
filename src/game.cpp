@@ -203,6 +203,18 @@ struct Game::Impl
         pickup->type = Pickup::Type::Potion;
     }
 
+    void AddExit(unsigned int x, unsigned int y) {
+        const auto id = components.CreateEntity();
+        const auto pickup = (Pickup*)components.CreateComponentOfType(Components::Type::Pickup, id);
+        const auto position = (Position*)components.CreateComponentOfType(Components::Type::Position, id);
+        const auto tile = (Tile*)components.CreateComponentOfType(Components::Type::Tile, id);
+        tile->name = "exit";
+        tile->z = 1;
+        position->x = x;
+        position->y = y;
+        pickup->type = Pickup::Type::Exit;
+    }
+
     void Worker() {
         diagnosticsSender.SendDiagnosticInformationString(
             3,
@@ -257,6 +269,7 @@ void Game::Start(
     impl_->AddTreasure(9, 8);
     impl_->AddFood(12, 9);
     impl_->AddPotion(6, 6);
+    impl_->AddExit(13, 11);
     for (int y = 0; y <= 12; ++y) {
         for (int x = 0; x <= 14; ++x) {
             if (

@@ -10,5 +10,6 @@ struct Pickup : public Component {
         Food,
         Potion,
         Treasure,
+        Exit,
     } type = Type::Treasure;
 };

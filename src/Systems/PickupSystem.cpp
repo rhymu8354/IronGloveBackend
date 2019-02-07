@@ -41,6 +41,7 @@ void PickupSystem::Update(
     const auto pickupsInfo = components.GetComponentsOfType(Components::Type::Pickup);
     auto pickups = (Pickup*)pickupsInfo.first;
     std::set< int > entitiesDestroyed;
+    bool exited = false;
     for (size_t i = 0; i < pickupsInfo.n; ++i) {
         auto& pickup = pickups[i];
         const auto position = (Position*)components.GetEntityComponentOfType(
@@ -54,21 +55,32 @@ void PickupSystem::Update(
             (position->x == playerPosition->x)
             && (position->y == playerPosition->y)
         ) {
-            (void)entitiesDestroyed.insert(pickup.entityId);
             switch (pickup.type) {
                 case Pickup::Type::Treasure: {
                     hero.score += 100;
+                    (void)entitiesDestroyed.insert(pickup.entityId);
                 } break;
                 case Pickup::Type::Food: {
                     playerHealth->hp += 100;
+                    (void)entitiesDestroyed.insert(pickup.entityId);
                 } break;
                 case Pickup::Type::Potion: {
                     ++hero.potions;
+                    (void)entitiesDestroyed.insert(pickup.entityId);
+                } break;
+                case Pickup::Type::Exit: {
+                    exited = true;
                 } break;
             }
         }
     }
     for (const auto entityId: entitiesDestroyed) {
         components.DestroyEntity(entityId);
+    }
+    if (exited) {
+        components.DestroyEntityComponentOfType(
+            Components::Type::Position,
+            hero.entityId
+        );
     }
 }
