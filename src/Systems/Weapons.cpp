@@ -57,7 +57,6 @@ void Weapons::Update(
             continue;
         }
         weapon.phase = ((weapon.phase + 1) % 4);
-        tile->name = SystemAbstractions::sprintf("axe%d", weapon.phase);
         auto collider = components.GetColliderAt(position->x, position->y);
         if (collider) {
             impl_->OnStrike(components, weapon, *collider, entitiesDestroyed);

@@ -45,6 +45,7 @@ void Render::Update(
         const auto weapon = (Weapon*)components.GetEntityComponentOfType(Components::Type::Weapon, tile.entityId);
         if (weapon != nullptr) {
             sprite["motion"] = Json::Object({
+                {"phase", weapon->phase},
                 {"dx", weapon->dx},
                 {"dy", weapon->dy},
             });
