@@ -35,9 +35,11 @@ void Hunger::Update(
         if (health == nullptr) {
             continue;
         }
-        --health->hp;
-        if (health->hp <= 0) {
-            (void)entitiesStarved.insert(hero.entityId);
+        if (health->hp > 0) {
+            --health->hp;
+            if (health->hp <= 0) {
+                (void)entitiesStarved.insert(hero.entityId);
+            }
         }
     }
     for (const auto entityId: entitiesStarved) {
