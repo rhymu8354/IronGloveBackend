@@ -7,6 +7,7 @@
 
 struct Render::Impl {
     std::shared_ptr< WebSockets::WebSocket > ws;
+    Json::Value previousRender;
 };
 
 Render::~Render() = default;
@@ -73,7 +74,10 @@ void Render::Update(
         message["score"] = playerHero->score;
         message["potions"] = playerHero->potions;
     }
-    impl_->ws->SendText(message.ToEncoding());
+    if (message != impl_->previousRender) {
+        impl_->ws->SendText(message.ToEncoding());
+    }
+    impl_->previousRender = message;
     for (const auto entityId: entitiesDestroyed) {
         components.DestroyEntityComponentOfType(Components::Type::Tile, entityId);
     }
