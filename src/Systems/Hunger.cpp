@@ -32,14 +32,7 @@ void Hunger::Update(
             Components::Type::Health,
             hero.entityId
         );
-        const auto position = (Position*)components.GetEntityComponentOfType(
-            Components::Type::Position,
-            hero.entityId
-        );
-        if (
-            (health == nullptr)
-            || (position == nullptr)
-        ) {
+        if (health == nullptr) {
             continue;
         }
         --health->hp;
@@ -48,9 +41,6 @@ void Hunger::Update(
         }
     }
     for (const auto entityId: entitiesStarved) {
-        components.DestroyEntityComponentOfType(
-            Components::Type::Position,
-            entityId
-        );
+        components.DestroyEntity(entityId);
     }
 }

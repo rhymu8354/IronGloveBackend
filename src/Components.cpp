@@ -279,8 +279,6 @@ int Components::CreateEntity() {
 void Components::DestroyEntity(int entityId) {
     DestroyEntityComponentOfType(Type::Collider, entityId);
     DestroyEntityComponentOfType(Type::Generator, entityId);
-    DestroyEntityComponentOfType(Type::Health, entityId);
-    DestroyEntityComponentOfType(Type::Hero, entityId);
     DestroyEntityComponentOfType(Type::Input, entityId);
     DestroyEntityComponentOfType(Type::Monster, entityId);
     DestroyEntityComponentOfType(Type::Pickup, entityId);

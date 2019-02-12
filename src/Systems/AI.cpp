@@ -123,16 +123,6 @@ void AI::Update(
         components.DestroyEntity(entityId);
     }
     if (playerDestroyed) {
-        const auto tile = (Tile*)components.GetEntityComponentOfType(
-            Components::Type::Tile,
-            playerPosition->entityId
-        );
-        if (tile != nullptr) {
-            tile->destroyed = true;
-        }
-        components.DestroyEntityComponentOfType(
-            Components::Type::Position,
-            playerPosition->entityId
-        );
+        components.DestroyEntity(playerPosition->entityId);
     }
 }

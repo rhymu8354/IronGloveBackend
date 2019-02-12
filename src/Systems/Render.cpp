@@ -65,10 +65,10 @@ void Render::Update(
         sprites.Add(std::move(sprite));
     }
     message["sprites"] = std::move(sprites);
-    const auto inputsInfo = components.GetComponentsOfType(Components::Type::Input);
-    if (inputsInfo.n == 1) {
-        const auto playerHealth = (Health*)components.GetEntityComponentOfType(Components::Type::Health, inputsInfo.first[0].entityId);
-        const auto playerHero = (Hero*)components.GetEntityComponentOfType(Components::Type::Hero, inputsInfo.first[0].entityId);
+    const auto heroesInfo = components.GetComponentsOfType(Components::Type::Hero);
+    if (heroesInfo.n == 1) {
+        const auto playerHealth = (Health*)components.GetEntityComponentOfType(Components::Type::Health, heroesInfo.first[0].entityId);
+        const auto playerHero = (Hero*)&heroesInfo.first[0];
         message["health"] = playerHealth->hp;
         message["score"] = playerHero->score;
         message["potions"] = playerHero->potions;
