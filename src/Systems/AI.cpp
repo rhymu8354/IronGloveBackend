@@ -121,9 +121,9 @@ void AI::Update(
         }
     }
     for (const auto entityId: entitiesDestroyed) {
-        components.DestroyEntity(entityId);
+        components.KillEntity(entityId);
     }
     if (playerDestroyed) {
-        components.DestroyEntity(playerPosition->entityId);
+        components.KillEntity(playerPosition->entityId);
     }
 }

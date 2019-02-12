@@ -75,7 +75,7 @@ void PickupSystem::Update(
         }
     }
     for (const auto entityId: entitiesDestroyed) {
-        components.DestroyEntity(entityId);
+        components.KillEntity(entityId);
     }
     if (exited) {
         const auto tile = (Tile*)components.GetEntityComponentOfType(

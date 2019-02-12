@@ -49,6 +49,6 @@ void Hunger::Update(
         }
     }
     for (const auto entityId: entitiesStarved) {
-        components.DestroyEntity(entityId);
+        components.KillEntity(entityId);
     }
 }

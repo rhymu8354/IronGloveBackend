@@ -92,6 +92,6 @@ void Weapons::Update(
         }
     }
     for (const auto entityId: entitiesDestroyed) {
-        components.DestroyEntity(entityId);
+        components.KillEntity(entityId);
     }
 }
