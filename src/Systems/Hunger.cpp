@@ -35,6 +35,12 @@ void Hunger::Update(
         if (health == nullptr) {
             continue;
         }
+        const auto position = (Position*)components.GetEntityComponentOfType(
+            Components::Type::Position, hero.entityId
+        );
+        if (position == nullptr) {
+            continue;
+        }
         if (health->hp > 0) {
             --health->hp;
             if (health->hp <= 0) {
