@@ -78,6 +78,7 @@ void AI::Update(
                 if (!playerDestroyed) {
                     playerHealth->hp -= 10;
                     if (playerHealth->hp <= 0) {
+                        playerHealth->hp = 0;
                         playerDestroyed = true;
                     }
                 }
