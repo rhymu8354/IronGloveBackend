@@ -27,6 +27,9 @@ void PlayerMovement::Update(
             --input.moveCooldown;
             continue;
         }
+        if (input.fire) {
+            continue;
+        }
         const auto position = (Position*)components.GetEntityComponentOfType(Components::Type::Position, input.entityId);
         if (position == nullptr) {
             continue;
