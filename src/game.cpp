@@ -1,33 +1,107 @@
 #include "Components.hpp"
 #include "game.hpp"
+#include "ScriptHost.hpp"
 #include "Systems.hpp"
 
+#include <algorithm>
 #include <future>
 #include <Json/Value.hpp>
 #include <mutex>
 #include <string>
 #include <SystemAbstractions/DiagnosticsSender.hpp>
+#include <SystemAbstractions/File.hpp>
 #include <thread>
+
+namespace {
+
+    /**
+     * Read and return the entire contents of the given file.
+     *
+     * @param[in,out] file
+     *     This is the file to read.
+     *
+     * @return
+     *     The contents of the file is returned.
+     */
+    std::string ReadFile(SystemAbstractions::File& file) {
+        if (!file.Open()) {
+            return "";
+        }
+        SystemAbstractions::IFile::Buffer buffer(file.GetSize());
+        const auto amountRead = file.Read(buffer);
+        file.Close();
+        if (amountRead != buffer.size()) {
+            return "";
+        }
+        return std::string(
+            buffer.begin(),
+            buffer.end()
+        );
+    }
+
+}
 
 struct Game::Impl
     : public std::enable_shared_from_this< Game::Impl >
 {
     std::shared_ptr< WebSockets::WebSocket > ws;
     CompleteDelegate completeDelegate;
-    SystemAbstractions::DiagnosticsSender diagnosticsSender;
+    std::shared_ptr< SystemAbstractions::DiagnosticsSender > diagnosticsSender;
     Components components;
     SystemCollection systems;
+    ScriptHost scriptHost;
     std::mutex mutex;
     std::promise< void > stopWorker;
     std::thread worker;
 
     explicit Impl(const std::string& id)
-        : diagnosticsSender(id)
+        : diagnosticsSender(std::make_shared< SystemAbstractions::DiagnosticsSender >(id))
     {
+        components.SetDiagnosticsSender(diagnosticsSender);
+    }
+
+    void LoadSystems() {
+        // Load the legacy C++ systems.
+        systems = Systems(ws);
+
+        // Make the components object available to Lua as a global.
+        const auto lua = scriptHost.GetLua();
+        components.PushLua(lua);
+        lua_setglobal(lua, "components");
+
+        // Read and parse Lua systems.
+        SystemAbstractions::File systemsLuaFile(
+            SystemAbstractions::File::GetExeParentDirectory()
+            + "/systems.lua"
+        );
+        const auto systemsLua = ReadFile(systemsLuaFile);
+        if (systemsLua.empty()) {
+            diagnosticsSender->SendDiagnosticInformationString(
+                SystemAbstractions::DiagnosticsSender::Levels::WARNING,
+                "Unable to load systems.lua"
+            );
+        } else {
+            const auto errorMessage = scriptHost.LoadScript(
+                "systems",
+                systemsLua
+            );
+            if (errorMessage.empty()) {
+                diagnosticsSender->SendDiagnosticInformationFormatted(
+                    3,
+                    "Loaded systems (%zu bytes)",
+                    systemsLua.length()
+                );
+            } else {
+                diagnosticsSender->SendDiagnosticInformationString(
+                    SystemAbstractions::DiagnosticsSender::Levels::WARNING,
+                    std::string("Error loading systems: ") + errorMessage
+                );
+            }
+        }
     }
 
     void OnWebSocketClosed() {
-        diagnosticsSender.SendDiagnosticInformationString(
+        diagnosticsSender->SendDiagnosticInformationString(
             3,
             "Goodbye!"
         );
@@ -224,7 +298,7 @@ struct Game::Impl
     }
 
     void Worker() {
-        diagnosticsSender.SendDiagnosticInformationString(
+        diagnosticsSender->SendDiagnosticInformationString(
             3,
             "Worker started!"
         );
@@ -236,11 +310,25 @@ struct Game::Impl
         ) {
             ++tick;
             std::lock_guard< decltype(mutex) > lock(mutex);
+
+            // Update legacy C++ systems.
             for (const auto system: systems) {
                 system->Update(components, tick);
             }
+
+            // Update new Lua systems.
+            const auto lua = scriptHost.GetLua();
+            components.PushLua(lua);
+            lua_pushinteger(lua, (lua_Integer)tick);
+            const auto errorMessage = scriptHost.Call("update");
+            if (!errorMessage.empty()) {
+                diagnosticsSender->SendDiagnosticInformationString(
+                    SystemAbstractions::DiagnosticsSender::Levels::WARNING,
+                    std::string("Error updating systems: ") + errorMessage
+                );
+            }
         }
-        diagnosticsSender.SendDiagnosticInformationString(
+        diagnosticsSender->SendDiagnosticInformationString(
             3,
             "Worker stopped!"
         );
@@ -258,14 +346,14 @@ void Game::Start(
     SystemAbstractions::DiagnosticsSender::DiagnosticMessageDelegate diagnosticMessageDelegate,
     CompleteDelegate completeDelegate
 ) {
-    impl_->diagnosticsSender.SubscribeToDiagnostics(diagnosticMessageDelegate);
-    impl_->diagnosticsSender.SendDiagnosticInformationString(
+    impl_->diagnosticsSender->SubscribeToDiagnostics(diagnosticMessageDelegate);
+    impl_->diagnosticsSender->SendDiagnosticInformationString(
         3,
         "Try this level now!"
     );
     impl_->ws = ws;
     impl_->completeDelegate = completeDelegate;
-    impl_->systems = Systems(ws);
+    impl_->LoadSystems();
     impl_->AddPlayer(1, 1);
     impl_->AddMonster(6, 2);
     impl_->AddMonster(1, 7);

@@ -37,6 +37,8 @@ set(Sources
     src/game.cpp
     src/game.hpp
     src/main.cpp
+    src/ScriptHost.cpp
+    src/ScriptHost.hpp
     src/System.hpp
     src/Systems.cpp
     src/Systems.hpp
@@ -52,6 +54,7 @@ set_target_properties(${This} PROPERTIES
 target_link_libraries(${This} PUBLIC
     Json
     HttpNetworkTransport
+    LuaLibrary
     SystemAbstractions
     WebSockets
 )

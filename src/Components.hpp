@@ -14,6 +14,13 @@
 #include "Components/Weapon.hpp"
 
 #include <memory>
+#include <SystemAbstractions/DiagnosticsSender.hpp>
+
+extern "C" {
+#include <lua.h>
+#include <lualib.h>
+#include <lauxlib.h>
+}
 
 class Components {
     // Types
@@ -52,6 +59,28 @@ public:
      */
     Components();
 
+    void SetDiagnosticsSender(
+        std::shared_ptr< SystemAbstractions::DiagnosticsSender > diagnosticsSender
+    );
+
+    /**
+     * This method is called to link the class with the given
+     * Lua interpreter.
+     *
+     * @param[in] lua
+     *     This points to the state of the Lua interpreter.
+     */
+    static void LinkLua(lua_State* lua);
+
+    /**
+     * This method is called to push the object onto
+     * the Lua stack.
+     *
+     * @param[in] lua
+     *     This points to the state of the Lua interpreter.
+     */
+    void PushLua(lua_State* lua);
+
     ComponentList GetComponentsOfType(Type type);
     Component* CreateComponentOfType(Type type, int entityId);
     Component* GetEntityComponentOfType(Type type, int entityId);
@@ -73,5 +102,5 @@ private:
     /**
      * This contains the private properties of the instance.
      */
-    std::unique_ptr< Impl > impl_;
+    std::shared_ptr< Impl > impl_;
 };
