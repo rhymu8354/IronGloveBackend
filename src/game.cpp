@@ -64,11 +64,6 @@ struct Game::Impl
         // Load the legacy C++ systems.
         systems = Systems(ws);
 
-        // Make the components object available to Lua as a global.
-        const auto lua = scriptHost.GetLua();
-        components.PushLua(lua);
-        lua_setglobal(lua, "components");
-
         // Read and parse Lua systems.
         SystemAbstractions::File systemsLuaFile(
             SystemAbstractions::File::GetExeParentDirectory()
@@ -98,6 +93,11 @@ struct Game::Impl
                 );
             }
         }
+    }
+
+    void BuildComponentTypes() {
+        const auto lua = scriptHost.GetLua();
+        components.BuildComponentTypeMap(lua);
     }
 
     void OnWebSocketClosed() {
@@ -354,6 +354,7 @@ void Game::Start(
     impl_->ws = ws;
     impl_->completeDelegate = completeDelegate;
     impl_->LoadSystems();
+    impl_->BuildComponentTypes();
     impl_->AddPlayer(1, 1);
     impl_->AddMonster(6, 2);
     impl_->AddMonster(1, 7);

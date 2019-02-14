@@ -64,8 +64,7 @@ public:
     );
 
     /**
-     * This method is called to link the class with the given
-     * Lua interpreter.
+     * Link the class with the given Lua interpreter.
      *
      * @param[in] lua
      *     This points to the state of the Lua interpreter.
@@ -73,8 +72,16 @@ public:
     static void LinkLua(lua_State* lua);
 
     /**
-     * This method is called to push the object onto
-     * the Lua stack.
+     * Build the component type map which holds all components of all types,
+     * along with Lua wrappers.
+     *
+     * @param[in] lua
+     *     This points to the state of the Lua interpreter.
+     */
+    void BuildComponentTypeMap(lua_State* lua);
+
+    /**
+     * Push the object onto the Lua stack.
      *
      * @param[in] lua
      *     This points to the state of the Lua interpreter.

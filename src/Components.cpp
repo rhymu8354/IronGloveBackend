@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <set>
 #include <map>
 #include <vector>
 
@@ -12,11 +13,16 @@ struct ComponentType {
     std::function< void(int entityId) > kill;
     std::function< Component*(int entityId) > get;
     std::function< size_t(int entityId) > getLuaIndex;
+    std::function< void(lua_State* lua, size_t index) > push;
 };
+
+template< typename T > using LuaPropertyMap = std::map< std::string, std::function< void(lua_State* lua, T* component) > >;
 
 struct Components::Impl {
     int nextEntityId = 1;
     std::map< Type, ComponentType > componentTypes;
+    std::set< std::string > collectionTypeNames;
+    std::map< std::string, Type > componentTypeNames;
     std::shared_ptr< SystemAbstractions::DiagnosticsSender > diagnosticsSender;
 
     /**
@@ -47,19 +53,16 @@ struct Components::Impl {
     static int Index(lua_State* lua) {
         auto self = *(std::shared_ptr< Impl >*)luaL_checkudata(lua, 1, "components");
         const std::string fieldName = luaL_checkstring(lua, 2);
-        if (fieldName == "heroes") {
-            auto heroes = (std::shared_ptr< Impl >*)lua_newuserdata(lua, sizeof(std::shared_ptr< Impl >));
-            new (heroes) std::shared_ptr< Impl >();
-            *heroes = self;
-            luaL_setmetatable(lua, "heroes");
-        // } else if (fieldName == "status") {
-        //     (void)lua_pushstring(lua, self->status_.c_str());
-        // } else if (fieldName == "progress") {
-        //     (void)lua_pushnumber(lua, (lua_Number)self->progress_);
-        } else {
+        const auto collectionTypeNamesEntry = self->collectionTypeNames.find(fieldName);
+        if (collectionTypeNamesEntry == self->collectionTypeNames.end()) {
             luaL_getmetatable(lua, "components");
             lua_insert(lua, 2);
             lua_rawget(lua, 2);
+        } else {
+            auto collectionWrapper = (std::shared_ptr< Impl >*)lua_newuserdata(lua, sizeof(std::shared_ptr< Impl >));
+            new (collectionWrapper) std::shared_ptr< Impl >();
+            *collectionWrapper = self;
+            luaL_setmetatable(lua, fieldName.c_str());
         }
         return 1;
     }
@@ -79,24 +82,9 @@ struct Components::Impl {
     static int NewIndex(lua_State* lua) {
         auto self = *(std::shared_ptr< Impl >*)luaL_checkudata(lua, 1, "components");
         const std::string fieldName = luaL_checkstring(lua, 2);
-        // if (fieldName == "title") {
-        //     size_t length;
-        //     auto text = luaL_checklstring(lua, 3, &length);
-        //     self->title_ = std::string(text, length);
-        //     self->user_->ScriptHostUserSetTitle(self->title_);
-        // } else if (fieldName == "status") {
-        //     size_t length;
-        //     auto text = luaL_checklstring(lua, 3, &length);
-        //     self->status_ = std::string(text, length);
-        //     self->user_->ScriptHostUserSetStatus(self->status_);
-        // } else if (fieldName == "progress") {
-        //     self->progress_ = (double)luaL_checknumber(lua, 3);
-        //     self->user_->ScriptHostUserSetProgress(self->progress_);
-        // } else {
-            luaL_getmetatable(lua, "components");
-            lua_insert(lua, 2);
-            lua_rawset(lua, 2);
-        // }
+        luaL_getmetatable(lua, "components");
+        lua_insert(lua, 2);
+        lua_rawset(lua, 2);
         return 0;
     }
 
@@ -133,22 +121,17 @@ struct Components::Impl {
         auto self = *(std::shared_ptr< Impl >*)luaL_checkudata(lua, 1, "components");
         const std::string typeName = luaL_checkstring(lua, 2);
         const auto entityId = (int)luaL_checkinteger(lua, 3);
-        if (typeName == "Health") {
-            auto index = self->componentTypes[Type::Health].getLuaIndex(entityId);
-            if (index == 0) {
-                lua_pushnil(lua);
-            } else {
-                self->PushHealth(lua, index);
-            }
-        } else if (typeName == "Position") {
-            auto index = self->componentTypes[Type::Position].getLuaIndex(entityId);
-            if (index == 0) {
-                lua_pushnil(lua);
-            } else {
-                self->PushPosition(lua, index);
-            }
-        } else {
+        const auto componentTypeNamesEntry = self->componentTypeNames.find(typeName);
+        if (componentTypeNamesEntry == self->componentTypeNames.end()) {
             lua_pushnil(lua);
+        } else {
+            const auto type = componentTypeNamesEntry->second;
+            auto index = self->componentTypes[type].getLuaIndex(entityId);
+            if (index == 0) {
+                lua_pushnil(lua);
+            } else {
+                self->componentTypes[type].push(lua, index);
+            }
         }
         return 1;
     }
@@ -162,333 +145,235 @@ struct Components::Impl {
         return 0;
     }
 
-    // Heroes
-
-    struct ScriptHero {
-        size_t index;
-        Hero* hero;
-    };
-
-    static int HeroesIndex(lua_State* lua) {
-        auto self = *(std::shared_ptr< Impl >*)luaL_checkudata(lua, 1, "heroes");
-        const auto heroIndex = (size_t)std::max((lua_Integer)0, luaL_checkinteger(lua, 2));
-        auto heroesInfo = self->componentTypes[Type::Hero].list();
-        if (
-            (heroIndex == 0)
-            || (heroIndex > heroesInfo.n)
-        ) {
-            lua_pushnil(lua);
-        }
-        self->PushHero(lua, heroIndex);
-        return 1;
-    }
-
-    static int HeroesLen(lua_State* lua) {
-        auto self = *(std::shared_ptr< Impl >*)luaL_checkudata(lua, 1, "heroes");
-        auto heroesInfo = self->componentTypes[Type::Hero].list();
-        lua_pushinteger(lua, (lua_Integer)heroesInfo.n);
-        return 1;
-    }
-
-    static int HeroesIterate(lua_State* lua) {
-        auto self = *(std::shared_ptr< Impl >*)luaL_checkudata(lua, 1, "heroes");
-        auto heroesInfo = self->componentTypes[Type::Hero].list();
-        luaL_checkany(lua, 3);
-        size_t heroIndex;
-        if (lua_isnil(lua, 3)) {
-            heroIndex = 1;
+    template< typename T > void MakeComponentType(
+        Components::Type type,
+        lua_State* lua,
+        const std::string& collectionWrapperName,
+        const std::string& componentWrapperName,
+        std::function< int(lua_State* lua) >& collectionIndex,
+        lua_CFunction collectionIndexThunk,
+        std::function< int(lua_State* lua) >& collectionLen,
+        lua_CFunction collectionLenThunk,
+        std::function< int(lua_State* lua) >& collectionIterate,
+        lua_CFunction collectionIterateThunk,
+        std::function< int(lua_State* lua) >& componentIndex,
+        lua_CFunction componentIndexThunk,
+        std::function< int(lua_State* lua) >& componentNewIndex,
+        lua_CFunction componentNewIndexThunk,
+        std::shared_ptr< LuaPropertyMap< T > > indexers = std::make_shared< LuaPropertyMap< T > >(),
+        std::shared_ptr< LuaPropertyMap< T > > newIndexers = std::make_shared< LuaPropertyMap< T > >(),
+        std::function<
+            void(
+                std::vector< T >& components,
+                int entityId
+            )
+        > kill = nullptr
+    ) {
+        (void)collectionTypeNames.insert(collectionWrapperName);
+        componentTypeNames[componentWrapperName] = type;
+        struct ScriptComponent {
+            size_t index;
+            T* component;
+        };
+        ComponentType componentType;
+        const auto components = std::make_shared< std::vector< T > >();
+        const auto list = [components]{
+            Components::ComponentList list;
+            list.first = components->data();
+            list.n = components->size();
+            return list;
+        };
+        componentType.list = list;
+        componentType.create = [components](int entityId){
+            Component* component;
+            const auto i = components->size();
+            components->resize(i + 1);
+            component = &(*components)[i];
+            component->entityId = entityId;
+            return component;
+        };
+        componentType.destroy = [components](int entityId){
+            auto componentsEntry = components->begin();
+            while (componentsEntry != components->end()) {
+                if (componentsEntry->entityId == entityId) {
+                    componentsEntry = components->erase(componentsEntry);
+                    break;
+                } else {
+                    ++componentsEntry;
+                }
+            }
+        };
+        if (kill == nullptr) {
+            componentType.kill = componentType.destroy;
         } else {
-            auto lastHero = (ScriptHero*)luaL_checkudata(lua, 3, "hero");
-            heroIndex = lastHero->index + 1;
+            componentType.kill = [components, kill](int entityId) {
+                kill(*components, entityId);
+            };
         }
-        if (heroIndex > heroesInfo.n) {
-            lua_pushnil(lua);
-        } else {
-            self->PushHero(lua, heroIndex);
-        }
-        return 1;
-    }
+        componentType.get = [components](int entityId){
+            const auto n = components->size();
+            for (size_t i = 0; i < n; ++i) {
+                if ((*components)[i].entityId == entityId) {
+                    return &(*components)[i];
+                }
+            }
+            return (T*)nullptr;
+        };
+        componentType.getLuaIndex = [components](int entityId){
+            const auto n = components->size();
+            for (size_t i = 0; i < n; ++i) {
+                if ((*components)[i].entityId == entityId) {
+                    return i + 1;
+                }
+            }
+            return (size_t)0;
+        };
+        const auto push = [list, componentWrapperName](lua_State* lua, size_t index) {
+            auto componentsInfo = list();
+            auto& component = ((T*)componentsInfo.first)[index - 1];
+            auto scriptComponent = (ScriptComponent*)lua_newuserdata(lua, sizeof(ScriptComponent));
+            scriptComponent->index = index;
+            scriptComponent->component = &component;
+            luaL_setmetatable(lua, componentWrapperName.c_str());
+        };
+        componentType.push = push;
+        collectionIndex = [list, push, collectionWrapperName, componentWrapperName](lua_State* lua){
+            (void)luaL_checkudata(lua, 1, collectionWrapperName.c_str());
+            const auto index = (size_t)std::max((lua_Integer)0, luaL_checkinteger(lua, 2));
+            auto componentsInfo = list();
+            if (
+                (index == 0)
+                || (index > componentsInfo.n)
+            ) {
+                lua_pushnil(lua);
+            }
+            push(lua, index);
+            return 1;
+        };
+        collectionLen = [list, collectionWrapperName](lua_State* lua){
+            (void)luaL_checkudata(lua, 1, collectionWrapperName.c_str());
+            auto componentsInfo = list();
+            lua_pushinteger(lua, (lua_Integer)componentsInfo.n);
+            return 1;
+        };
+        collectionIterate = [list, push, collectionWrapperName, componentWrapperName](lua_State* lua){
+            (void)luaL_checkudata(lua, 1, collectionWrapperName.c_str());
+            auto componentsInfo = list();
+            luaL_checkany(lua, 3);
+            size_t index;
+            if (lua_isnil(lua, 3)) {
+                index = 1;
+            } else {
+                auto lastComponent = (ScriptComponent*)luaL_checkudata(lua, 3, componentWrapperName.c_str());
+                index = lastComponent->index + 1;
+            }
+            if (index > componentsInfo.n) {
+                lua_pushnil(lua);
+            } else {
+                push(lua, index);
+            }
+            return 1;
+        };
+        componentIndex = [componentWrapperName, indexers](lua_State* lua){
+            auto self = (ScriptComponent*)luaL_checkudata(lua, 1, componentWrapperName.c_str());
+            const std::string fieldName = luaL_checkstring(lua, 2);
+            if (fieldName == "entityId") {
+                lua_pushinteger(lua, self->component->entityId);
+            } else {
+                const auto indexersEntry = indexers->find(fieldName);
+                if (indexersEntry == indexers->end()) {
+                    lua_pushnil(lua);
+                } else {
+                    indexersEntry->second(lua, self->component);
+                }
+            }
+            return 1;
+        };
+        componentNewIndex = [componentWrapperName, newIndexers](lua_State* lua){
+            auto self = (ScriptComponent*)luaL_checkudata(lua, 1, componentWrapperName.c_str());
+            const std::string fieldName = luaL_checkstring(lua, 2);
+            const auto newIndexersEntry = newIndexers->find(fieldName);
+            if (newIndexersEntry != newIndexers->end()) {
+                newIndexersEntry->second(lua, self->component);
+            }
+            return 0;
+        };
 
-    void PushHero(lua_State* lua, size_t heroIndex) {
-        auto heroesInfo = componentTypes[Type::Hero].list();
-        auto& hero = ((Hero*)heroesInfo.first)[heroIndex - 1];
-        auto scriptHero = (ScriptHero*)lua_newuserdata(lua, sizeof(ScriptHero));
-        scriptHero->index = heroIndex;
-        scriptHero->hero = &hero;
-        luaL_setmetatable(lua, "hero");
-    }
+        // Collection
+        luaL_newmetatable(lua, collectionWrapperName.c_str());
+        lua_pushstring(lua, "__index");
+        lua_pushcfunction(lua, collectionIndexThunk);
+        lua_settable(lua, -3);
+        lua_pushstring(lua, "__len");
+        lua_pushcfunction(lua, collectionLenThunk);
+        lua_settable(lua, -3);
+        lua_pushstring(lua, "__call");
+        lua_pushcfunction(lua, collectionIterateThunk);
+        lua_settable(lua, -3);
+        lua_pop(lua, 1);
 
-    static int HeroIndex(lua_State* lua) {
-        auto self = (ScriptHero*)luaL_checkudata(lua, 1, "hero");
-        const std::string fieldName = luaL_checkstring(lua, 2);
-        if (fieldName == "score") {
-            lua_pushinteger(lua, self->hero->score);
-        } else if (fieldName == "entityId") {
-            lua_pushinteger(lua, self->hero->entityId);
-        } else {
-            lua_pushnil(lua);
-        }
-        return 1;
-    }
-
-    // Health
-
-    struct ScriptHealth {
-        size_t index;
-        Health* health;
-    };
-
-    static int HealthsIndex(lua_State* lua) {
-        auto self = *(std::shared_ptr< Impl >*)luaL_checkudata(lua, 1, "healths");
-        const auto healthIndex = (size_t)std::max((lua_Integer)0, luaL_checkinteger(lua, 2));
-        auto healthsInfo = self->componentTypes[Type::Health].list();
-        if (
-            (healthIndex == 0)
-            || (healthIndex > healthsInfo.n)
-        ) {
-            lua_pushnil(lua);
-        }
-        self->PushHealth(lua, healthIndex);
-        return 1;
-    }
-
-    static int HealthsLen(lua_State* lua) {
-        auto self = *(std::shared_ptr< Impl >*)luaL_checkudata(lua, 1, "healths");
-        auto healthsInfo = self->componentTypes[Type::Health].list();
-        lua_pushinteger(lua, (lua_Integer)healthsInfo.n);
-        return 1;
-    }
-
-    static int HealthsIterate(lua_State* lua) {
-        auto self = *(std::shared_ptr< Impl >*)luaL_checkudata(lua, 1, "healths");
-        auto healthsInfo = self->componentTypes[Type::Health].list();
-        luaL_checkany(lua, 3);
-        size_t healthIndex;
-        if (lua_isnil(lua, 3)) {
-            healthIndex = 1;
-        } else {
-            auto lastHealth = (ScriptHealth*)luaL_checkudata(lua, 3, "health");
-            healthIndex = lastHealth->index + 1;
-        }
-        if (healthIndex > healthsInfo.n) {
-            lua_pushnil(lua);
-        } else {
-            self->PushHealth(lua, healthIndex);
-        }
-        return 1;
-    }
-
-    void PushHealth(lua_State* lua, size_t healthIndex) {
-        auto healthsInfo = componentTypes[Type::Health].list();
-        auto& health = ((Health*)healthsInfo.first)[healthIndex - 1];
-        auto scriptHealth = (ScriptHealth*)lua_newuserdata(lua, sizeof(ScriptHealth));
-        scriptHealth->index = healthIndex;
-        scriptHealth->health = &health;
-        luaL_setmetatable(lua, "health");
-    }
-
-    static int HealthIndex(lua_State* lua) {
-        auto self = (ScriptHealth*)luaL_checkudata(lua, 1, "health");
-        const std::string fieldName = luaL_checkstring(lua, 2);
-        if (fieldName == "hp") {
-            lua_pushinteger(lua, self->health->hp);
-        } else if (fieldName == "entityId") {
-            lua_pushinteger(lua, self->health->entityId);
-        } else {
-            lua_pushnil(lua);
-        }
-        return 1;
-    }
-
-    static int HealthNewIndex(lua_State* lua) {
-        auto self = (ScriptHealth*)luaL_checkudata(lua, 1, "health");
-        const std::string fieldName = luaL_checkstring(lua, 2);
-        if (fieldName == "hp") {
-            const auto hp = (int)luaL_checkinteger(lua, 3);
-            self->health->hp = hp;
-        }
-        return 0;
-    }
-
-    // Position
-
-    struct ScriptPosition {
-        size_t index;
-        Position* position;
-    };
-
-    static int PositionsIndex(lua_State* lua) {
-        auto self = *(std::shared_ptr< Impl >*)luaL_checkudata(lua, 1, "positions");
-        const auto positionIndex = (size_t)std::max((lua_Integer)0, luaL_checkinteger(lua, 2));
-        auto positionsInfo = self->componentTypes[Type::Position].list();
-        if (
-            (positionIndex == 0)
-            || (positionIndex > positionsInfo.n)
-        ) {
-            lua_pushnil(lua);
-        }
-        self->PushPosition(lua, positionIndex);
-        return 1;
-    }
-
-    static int PositionsLen(lua_State* lua) {
-        auto self = *(std::shared_ptr< Impl >*)luaL_checkudata(lua, 1, "positions");
-        auto positionsInfo = self->componentTypes[Type::Position].list();
-        lua_pushinteger(lua, (lua_Integer)positionsInfo.n);
-        return 1;
-    }
-
-    static int PositionsIterate(lua_State* lua) {
-        auto self = *(std::shared_ptr< Impl >*)luaL_checkudata(lua, 1, "positions");
-        auto positionsInfo = self->componentTypes[Type::Position].list();
-        luaL_checkany(lua, 3);
-        size_t positionIndex;
-        if (lua_isnil(lua, 3)) {
-            positionIndex = 1;
-        } else {
-            auto lastPosition = (ScriptPosition*)luaL_checkudata(lua, 3, "position");
-            positionIndex = lastPosition->index + 1;
-        }
-        if (positionIndex > positionsInfo.n) {
-            lua_pushnil(lua);
-        } else {
-            self->PushPosition(lua, positionIndex);
-        }
-        return 1;
-    }
-
-    void PushPosition(lua_State* lua, size_t positionIndex) {
-        auto positionsInfo = componentTypes[Type::Position].list();
-        auto& position = ((Position*)positionsInfo.first)[positionIndex - 1];
-        auto scriptPosition = (ScriptPosition*)lua_newuserdata(lua, sizeof(ScriptPosition));
-        scriptPosition->index = positionIndex;
-        scriptPosition->position = &position;
-        luaL_setmetatable(lua, "position");
-    }
-
-    static int PositionIndex(lua_State* lua) {
-        auto self = (ScriptPosition*)luaL_checkudata(lua, 1, "position");
-        const std::string fieldName = luaL_checkstring(lua, 2);
-        if (fieldName == "x") {
-            lua_pushinteger(lua, self->position->x);
-        } else if (fieldName == "y") {
-            lua_pushinteger(lua, self->position->y);
-        } else if (fieldName == "entityId") {
-            lua_pushinteger(lua, self->position->entityId);
-        } else {
-            lua_pushnil(lua);
-        }
-        return 1;
+        // Component
+        luaL_newmetatable(lua, componentWrapperName.c_str());
+        lua_pushstring(lua, "__index");
+        lua_pushcfunction(lua, componentIndexThunk);
+        lua_settable(lua, -3);
+        lua_pushstring(lua, "__newindex");
+        lua_pushcfunction(lua, componentNewIndexThunk);
+        lua_settable(lua, -3);
+        lua_pop(lua, 1);
+        componentTypes[type] = std::move(componentType);
     }
 };
 
-template< typename T > ComponentType MakeComponentType(
-    Components::Type type,
-    std::function<
-        void(
-            std::vector< T >& components,
-            int entityId
-        )
-    > kill = nullptr
-) {
-    ComponentType componentType;
-    const auto components = std::make_shared< std::vector< T > >();
-    componentType.list = [components]{
-        Components::ComponentList list;
-        list.first = components->data();
-        list.n = components->size();
-        return list;
-    };
-    componentType.create = [components](int entityId){
-        Component* component;
-        const auto i = components->size();
-        components->resize(i + 1);
-        component = &(*components)[i];
-        component->entityId = entityId;
-        return component;
-    };
-    componentType.destroy = [components](int entityId){
-        auto componentsEntry = components->begin();
-        while (componentsEntry != components->end()) {
-            if (componentsEntry->entityId == entityId) {
-                componentsEntry = components->erase(componentsEntry);
-                break;
-            } else {
-                ++componentsEntry;
-            }
-        }
-    };
-    if (kill == nullptr) {
-        componentType.kill = componentType.destroy;
-    } else {
-        componentType.kill = [components, kill](int entityId) {
-            kill(*components, entityId);
-        };
+#define MAKE_COLLECTION_INDEX_THUNK(type) \
+    std::function< int(lua_State* lua) > type##CollectionIndex; \
+    int type##CollectionIndexThunk(lua_State* lua) { \
+        return type##CollectionIndex(lua); \
     }
-    componentType.get = [components](int entityId){
-        const auto n = components->size();
-        for (size_t i = 0; i < n; ++i) {
-            if ((*components)[i].entityId == entityId) {
-                return &(*components)[i];
-            }
-        }
-        return (T*)nullptr;
-    };
-    componentType.getLuaIndex = [components](int entityId){
-        const auto n = components->size();
-        for (size_t i = 0; i < n; ++i) {
-            if ((*components)[i].entityId == entityId) {
-                return i + 1;
-            }
-        }
-        return (size_t)0;
-    };
-    return componentType;
-}
+
+#define MAKE_COLLECTION_LEN_THUNK(type) \
+    std::function< int(lua_State* lua) > type##CollectionLen; \
+    int type##CollectionLenThunk(lua_State* lua) { \
+        return type##CollectionLen(lua); \
+    }
+
+#define MAKE_COLLECTION_ITERATE_THUNK(type) \
+    std::function< int(lua_State* lua) > type##CollectionIterate; \
+    int type##CollectionIterateThunk(lua_State* lua) { \
+        return type##CollectionIterate(lua); \
+    }
+
+#define MAKE_COMPONENT_INDEX_THUNK(type) \
+    std::function< int(lua_State* lua) > type##ComponentIndex; \
+    int type##ComponentIndexThunk(lua_State* lua) { \
+        return type##ComponentIndex(lua); \
+    }
+
+#define MAKE_COMPONENT_NEW_INDEX_THUNK(type) \
+    std::function< int(lua_State* lua) > type##ComponentNewIndex; \
+    int type##ComponentNewIndexThunk(lua_State* lua) { \
+        return type##ComponentNewIndex(lua); \
+    }
+
+#define MAKE_THUNKS(type) \
+    MAKE_COLLECTION_INDEX_THUNK(type) \
+    MAKE_COLLECTION_LEN_THUNK(type) \
+    MAKE_COLLECTION_ITERATE_THUNK(type) \
+    MAKE_COMPONENT_INDEX_THUNK(type) \
+    MAKE_COMPONENT_NEW_INDEX_THUNK(type)
+
+#define PASS_THUNKS(type) \
+    type##CollectionIndex, type##CollectionIndexThunk, \
+    type##CollectionLen, type##CollectionLenThunk, \
+    type##CollectionIterate, type##CollectionIterateThunk, \
+    type##ComponentIndex, type##ComponentIndexThunk, \
+    type##ComponentNewIndex, type##ComponentNewIndexThunk
 
 Components::~Components() = default;
 
 Components::Components()
     : impl_(std::make_shared< Impl >())
 {
-    impl_->componentTypes[Type::Collider] = MakeComponentType< Collider >(Type::Collider);
-    impl_->componentTypes[Type::Generator] = MakeComponentType< Generator >(Type::Generator);
-    impl_->componentTypes[Type::Health] = MakeComponentType< Health >(
-        Type::Health,
-        [](
-            std::vector< Health >& components,
-            int entityId
-        ){
-        }
-    );
-    impl_->componentTypes[Type::Hero] = MakeComponentType< Hero >(
-        Type::Hero,
-        [](
-            std::vector< Hero >& components,
-            int entityId
-        ){
-        }
-    );
-    impl_->componentTypes[Type::Input] = MakeComponentType< Input >(Type::Input);
-    impl_->componentTypes[Type::Monster] = MakeComponentType< Monster >(Type::Monster);
-    impl_->componentTypes[Type::Pickup] = MakeComponentType< Pickup >(Type::Pickup);
-    impl_->componentTypes[Type::Position] = MakeComponentType< Position >(Type::Position);
-    impl_->componentTypes[Type::Reward] = MakeComponentType< Reward >(Type::Reward);
-    impl_->componentTypes[Type::Tile] = MakeComponentType< Tile >(
-        Type::Tile,
-        [](
-            std::vector< Tile >& components,
-            int entityId
-        ){
-            for (auto& component: components) {
-                if (component.entityId == entityId) {
-                    component.destroyed = true;
-                    break;
-                }
-            }
-        }
-    );
-    impl_->componentTypes[Type::Weapon] = MakeComponentType< Weapon >(Type::Weapon);
 }
 
 void Components::SetDiagnosticsSender(
@@ -522,69 +407,133 @@ void Components::LinkLua(lua_State* lua) {
     lua_pushcfunction(lua, Impl::KillEntity);
     lua_settable(lua, -3);
     lua_pop(lua, 1);
+}
 
-    // Heroes
-    luaL_newmetatable(lua, "heroes");
-    lua_pushstring(lua, "__index");
-    lua_pushcfunction(lua, Impl::HeroesIndex);
-    lua_settable(lua, -3);
-    lua_pushstring(lua, "__len");
-    lua_pushcfunction(lua, Impl::HeroesLen);
-    lua_settable(lua, -3);
-    lua_pushstring(lua, "__call");
-    lua_pushcfunction(lua, Impl::HeroesIterate);
-    lua_settable(lua, -3);
-    lua_pop(lua, 1);
+MAKE_THUNKS(Collider)
+MAKE_THUNKS(Generator)
+MAKE_THUNKS(Health)
+MAKE_THUNKS(Hero)
+MAKE_THUNKS(Input)
+MAKE_THUNKS(Monster)
+MAKE_THUNKS(Pickup)
+MAKE_THUNKS(Position)
+MAKE_THUNKS(Reward)
+MAKE_THUNKS(Tile)
+MAKE_THUNKS(Weapon)
 
-    // Hero
-    luaL_newmetatable(lua, "hero");
-    lua_pushstring(lua, "__index");
-    lua_pushcfunction(lua, Impl::HeroIndex);
-    lua_settable(lua, -3);
-    lua_pop(lua, 1);
-
-    // Healths
-    luaL_newmetatable(lua, "healths");
-    lua_pushstring(lua, "__index");
-    lua_pushcfunction(lua, Impl::HealthsIndex);
-    lua_settable(lua, -3);
-    lua_pushstring(lua, "__len");
-    lua_pushcfunction(lua, Impl::HealthsLen);
-    lua_settable(lua, -3);
-    lua_pushstring(lua, "__call");
-    lua_pushcfunction(lua, Impl::HealthsIterate);
-    lua_settable(lua, -3);
-    lua_pop(lua, 1);
-
-    // Health
-    luaL_newmetatable(lua, "health");
-    lua_pushstring(lua, "__index");
-    lua_pushcfunction(lua, Impl::HealthIndex);
-    lua_settable(lua, -3);
-    lua_pushstring(lua, "__newindex");
-    lua_pushcfunction(lua, Impl::HealthNewIndex);
-    lua_settable(lua, -3);
-    lua_pop(lua, 1);
-
-    // Positions
-    luaL_newmetatable(lua, "positions");
-    lua_pushstring(lua, "__index");
-    lua_pushcfunction(lua, Impl::PositionsIndex);
-    lua_settable(lua, -3);
-    lua_pushstring(lua, "__len");
-    lua_pushcfunction(lua, Impl::PositionsLen);
-    lua_settable(lua, -3);
-    lua_pushstring(lua, "__call");
-    lua_pushcfunction(lua, Impl::PositionsIterate);
-    lua_settable(lua, -3);
-    lua_pop(lua, 1);
-
-    // Position
-    luaL_newmetatable(lua, "position");
-    lua_pushstring(lua, "__index");
-    lua_pushcfunction(lua, Impl::PositionIndex);
-    lua_settable(lua, -3);
-    lua_pop(lua, 1);
+void Components::BuildComponentTypeMap(lua_State* lua) {
+    impl_->MakeComponentType< Collider >(
+        Type::Collider,
+        lua,
+        "colliders", "collider",
+        PASS_THUNKS(Collider)
+    );
+    impl_->MakeComponentType< Generator >(
+        Type::Generator,
+        lua,
+        "generators", "generator",
+        PASS_THUNKS(Generator)
+    );
+    impl_->MakeComponentType< Health >(
+        Type::Health,
+        lua,
+        "healths", "health",
+        PASS_THUNKS(Health),
+        std::make_shared< LuaPropertyMap< Health > >(
+            std::initializer_list< LuaPropertyMap< Health >::value_type >{
+                {"hp", [](lua_State* lua, Health* component){
+                    lua_pushinteger(lua, component->hp);
+                }},
+            }
+        ),
+        std::make_shared< LuaPropertyMap< Health > >(
+            std::initializer_list< LuaPropertyMap< Health >::value_type >{
+                {"hp", [](lua_State* lua, Health* component){
+                    const auto hp = (int)luaL_checkinteger(lua, 3);
+                    component->hp = hp;
+                }},
+            }
+        ),
+        [](
+            std::vector< Health >& components,
+            int entityId
+        ){
+        }
+    );
+    impl_->MakeComponentType< Hero >(
+        Type::Hero,
+        lua,
+        "heroes", "hero",
+        PASS_THUNKS(Hero),
+        std::make_shared< LuaPropertyMap< Hero > >(
+            std::initializer_list< LuaPropertyMap< Hero >::value_type >{
+                {"score", [](lua_State* lua, Hero* component){
+                    lua_pushinteger(lua, component->score);
+                }},
+            }
+        ),
+        std::make_shared< LuaPropertyMap< Hero > >(),
+        [](
+            std::vector< Hero >& components,
+            int entityId
+        ){
+        }
+    );
+    impl_->MakeComponentType< Input >(
+        Type::Input,
+        lua,
+        "colliders", "collider",
+        PASS_THUNKS(Collider)
+    );
+    impl_->MakeComponentType< Monster >(
+        Type::Monster,
+        lua,
+        "monsters", "monster",
+        PASS_THUNKS(Monster)
+    );
+    impl_->MakeComponentType< Pickup >(
+        Type::Pickup,
+        lua,
+        "pickups", "pickup",
+        PASS_THUNKS(Pickup)
+    );
+    impl_->MakeComponentType< Position >(
+        Type::Position,
+        lua,
+        "position", "position",
+        PASS_THUNKS(Position)
+    );
+    impl_->MakeComponentType< Reward >(
+        Type::Reward,
+        lua,
+        "rewards", "reward",
+        PASS_THUNKS(Reward)
+    );
+    impl_->MakeComponentType< Tile >(
+        Type::Tile,
+        lua,
+        "tiles", "tile",
+        PASS_THUNKS(Tile),
+        std::make_shared< LuaPropertyMap< Tile > >(),
+        std::make_shared< LuaPropertyMap< Tile > >(),
+        [](
+            std::vector< Tile >& components,
+            int entityId
+        ){
+            for (auto& component: components) {
+                if (component.entityId == entityId) {
+                    component.destroyed = true;
+                    break;
+                }
+            }
+        }
+    );
+    impl_->MakeComponentType< Weapon >(
+        Type::Weapon,
+        lua,
+        "weapons", "weapon",
+        PASS_THUNKS(Weapon)
+    );
 }
 
 void Components::PushLua(lua_State* lua) {
