@@ -106,6 +106,29 @@ struct Components::Impl {
         return 1;
     }
 
+    static int CreateEntity(lua_State* lua) {
+        auto self = *(std::shared_ptr< Impl >*)luaL_checkudata(lua, 1, "components");
+        const auto entityId = self->nextEntityId++;
+        lua_pushinteger(lua, (lua_Integer)entityId);
+        return 1;
+    }
+
+    static int CreateComponentOfType(lua_State* lua) {
+        auto self = *(std::shared_ptr< Impl >*)luaL_checkudata(lua, 1, "components");
+        const std::string typeName = luaL_checkstring(lua, 2);
+        const auto entityId = (int)luaL_checkinteger(lua, 3);
+        const auto componentTypeNamesEntry = self->componentTypeNames.find(typeName);
+        if (componentTypeNamesEntry == self->componentTypeNames.end()) {
+            lua_pushnil(lua);
+        } else {
+            const auto& componentType = self->componentTypes[componentTypeNamesEntry->second];
+            const auto component = componentType.create(entityId);
+            const auto list = componentType.list();
+            componentType.push(lua, list.n);
+        }
+        return 1;
+    }
+
     static int DiagnosticMessageFromSystems(lua_State* lua) {
         auto self = *(std::shared_ptr< Impl >*)luaL_checkudata(lua, 1, "components");
         const auto level = (size_t)std::max((lua_Integer)0, luaL_checkinteger(lua, 2));
@@ -396,6 +419,12 @@ void Components::LinkLua(lua_State* lua) {
     lua_settable(lua, -3);
     lua_pushstring(lua, "__tostring");
     lua_pushcfunction(lua, Impl::ToString);
+    lua_settable(lua, -3);
+    lua_pushstring(lua, "CreateEntity");
+    lua_pushcfunction(lua, Impl::CreateEntity);
+    lua_settable(lua, -3);
+    lua_pushstring(lua, "CreateComponentOfType");
+    lua_pushcfunction(lua, Impl::CreateComponentOfType);
     lua_settable(lua, -3);
     lua_pushstring(lua, "DiagnosticMessage");
     lua_pushcfunction(lua, Impl::DiagnosticMessageFromSystems);

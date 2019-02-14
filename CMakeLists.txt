@@ -19,8 +19,6 @@ set(Sources
     src/Components/Weapon.hpp
     src/Systems/AI.cpp
     src/Systems/AI.hpp
-    src/Systems/Generation.cpp
-    src/Systems/Generation.hpp
     src/Systems/PickupSystem.cpp
     src/Systems/PickupSystem.hpp
     src/Systems/PlayerFiring.cpp
