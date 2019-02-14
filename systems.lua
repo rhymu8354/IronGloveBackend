@@ -58,6 +58,49 @@ function Generation(components, tick)
 end
 
 function Pickup(components, tick)
+    local heroes = components.heroes
+    if #heroes ~= 1 then
+        components:DiagnosticMessage(3, "#heroes ~= 1")
+        return
+    end
+    local hero = heroes[1]
+    local playerPosition = components:GetEntityComponentOfType("position", hero.entityId)
+    local playerHealth = components:GetEntityComponentOfType("health", hero.entityId)
+    if not playerPosition or not playerHealth then
+        components:DiagnosticMessage(3, "hero is missing position and/or health")
+        return
+    end
+    local entitiesDestroyed = {}
+    local exited = false
+    for pickup in components.pickups do
+        local position = components:GetEntityComponentOfType("position", pickup.entityId)
+        if position and position.x == playerPosition.x and position.y == playerPosition.y then
+            local destroyPickup = true
+            if pickup.type == "Treasure" then
+                hero.score = hero.score + 100
+            elseif pickup.type == "Food" then
+                playerHealth.hp = playerHealth.hp + 100
+            elseif pickup.type == "Potion" then
+                hero.potions = hero.potions + 1
+            elseif pickup.type == "Exit" then
+                exited = true
+                destroyPickup = false
+            end
+            if destroyPickup then
+                entitiesDestroyed[#entitiesDestroyed + 1] = pickup.entityId
+            end
+        end
+    end
+    for i,entityId in ipairs(entitiesDestroyed) do
+        components:KillEntity(entityId)
+    end
+    if exited then
+        local tile = components:GetEntityComponentOfType("tile", hero.entityId)
+        if tile then
+            tile.destroyed = true
+        end
+        components:DestroyEntityComponentOfType("position", hero.entityId)
+    end
 end
 
 function Hunger(components, tick)

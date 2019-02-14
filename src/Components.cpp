@@ -129,6 +129,18 @@ struct Components::Impl {
         return 1;
     }
 
+    static int DestroyEntityComponentOfType(lua_State* lua) {
+        auto self = *(std::shared_ptr< Impl >*)luaL_checkudata(lua, 1, "components");
+        const std::string typeName = luaL_checkstring(lua, 2);
+        const auto entityId = (int)luaL_checkinteger(lua, 3);
+        const auto componentTypeNamesEntry = self->componentTypeNames.find(typeName);
+        if (componentTypeNamesEntry != self->componentTypeNames.end()) {
+            const auto& componentType = self->componentTypes[componentTypeNamesEntry->second];
+            componentType.destroy(entityId);
+        }
+        return 0;
+    }
+
     static int DiagnosticMessageFromSystems(lua_State* lua) {
         auto self = *(std::shared_ptr< Impl >*)luaL_checkudata(lua, 1, "components");
         const auto level = (size_t)std::max((lua_Integer)0, luaL_checkinteger(lua, 2));
@@ -425,6 +437,9 @@ void Components::LinkLua(lua_State* lua) {
     lua_settable(lua, -3);
     lua_pushstring(lua, "CreateComponentOfType");
     lua_pushcfunction(lua, Impl::CreateComponentOfType);
+    lua_settable(lua, -3);
+    lua_pushstring(lua, "DestroyEntityComponentOfType");
+    lua_pushcfunction(lua, Impl::DestroyEntityComponentOfType);
     lua_settable(lua, -3);
     lua_pushstring(lua, "DiagnosticMessage");
     lua_pushcfunction(lua, Impl::DiagnosticMessageFromSystems);
@@ -874,7 +889,7 @@ void Components::KillEntity(int entityId) {
 }
 
 void Components::DestroyEntityComponentOfType(Type type, int entityId) {
-    return impl_->componentTypes[type].destroy(entityId);
+    impl_->componentTypes[type].destroy(entityId);
 }
 
 bool Components::IsObstacleInTheWay(int x, int y, int mask) {
