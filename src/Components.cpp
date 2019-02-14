@@ -426,13 +426,43 @@ void Components::BuildComponentTypeMap(lua_State* lua) {
         Type::Collider,
         lua,
         "colliders", "collider",
-        PASS_THUNKS(Collider)
+        PASS_THUNKS(Collider),
+        std::make_shared< LuaPropertyMap< Collider > >(
+            std::initializer_list< LuaPropertyMap< Collider >::value_type >{
+                {"mask", [](lua_State* lua, Collider* component){
+                    lua_pushinteger(lua, (lua_Integer)component->mask);
+                }},
+            }
+        ),
+        std::make_shared< LuaPropertyMap< Collider > >(
+            std::initializer_list< LuaPropertyMap< Collider >::value_type >{
+                {"mask", [](lua_State* lua, Collider* component){
+                    const auto mask = (int)luaL_checkinteger(lua, 3);
+                    component->mask = mask;
+                }},
+            }
+        )
     );
     impl_->MakeComponentType< Generator >(
         Type::Generator,
         lua,
         "generators", "generator",
-        PASS_THUNKS(Generator)
+        PASS_THUNKS(Generator),
+        std::make_shared< LuaPropertyMap< Generator > >(
+            std::initializer_list< LuaPropertyMap< Generator >::value_type >{
+                {"spawnChance", [](lua_State* lua, Generator* component){
+                    lua_pushnumber(lua, (lua_Number)component->spawnChance);
+                }},
+            }
+        ),
+        std::make_shared< LuaPropertyMap< Generator > >(
+            std::initializer_list< LuaPropertyMap< Generator >::value_type >{
+                {"spawnChance", [](lua_State* lua, Generator* component){
+                    const auto spawnChance = (double)luaL_checknumber(lua, 3);
+                    component->spawnChance = spawnChance;
+                }},
+            }
+        )
     );
     impl_->MakeComponentType< Health >(
         Type::Health,
@@ -442,7 +472,7 @@ void Components::BuildComponentTypeMap(lua_State* lua) {
         std::make_shared< LuaPropertyMap< Health > >(
             std::initializer_list< LuaPropertyMap< Health >::value_type >{
                 {"hp", [](lua_State* lua, Health* component){
-                    lua_pushinteger(lua, component->hp);
+                    lua_pushinteger(lua, (lua_Integer)component->hp);
                 }},
             }
         ),
@@ -468,11 +498,25 @@ void Components::BuildComponentTypeMap(lua_State* lua) {
         std::make_shared< LuaPropertyMap< Hero > >(
             std::initializer_list< LuaPropertyMap< Hero >::value_type >{
                 {"score", [](lua_State* lua, Hero* component){
-                    lua_pushinteger(lua, component->score);
+                    lua_pushinteger(lua, (lua_Integer)component->score);
+                }},
+                {"potions", [](lua_State* lua, Hero* component){
+                    lua_pushinteger(lua, (lua_Integer)component->potions);
                 }},
             }
         ),
-        std::make_shared< LuaPropertyMap< Hero > >(),
+        std::make_shared< LuaPropertyMap< Hero > >(
+            std::initializer_list< LuaPropertyMap< Hero >::value_type >{
+                {"score", [](lua_State* lua, Hero* component){
+                    const auto score = (int)luaL_checkinteger(lua, 3);
+                    component->score = score;
+                }},
+                {"potions", [](lua_State* lua, Hero* component){
+                    const auto potions = (int)luaL_checkinteger(lua, 3);
+                    component->potions = potions;
+                }},
+            }
+        ),
         [](
             std::vector< Hero >& components,
             int entityId
@@ -482,8 +526,89 @@ void Components::BuildComponentTypeMap(lua_State* lua) {
     impl_->MakeComponentType< Input >(
         Type::Input,
         lua,
-        "colliders", "collider",
-        PASS_THUNKS(Collider)
+        "inputs", "input",
+        PASS_THUNKS(Input),
+        std::make_shared< LuaPropertyMap< Input > >(
+            std::initializer_list< LuaPropertyMap< Input >::value_type >{
+                {"fire", [](lua_State* lua, Input* component){
+                    const std::string fireAsString(1, component->fire);
+                    lua_pushstring(lua, fireAsString.c_str());
+                }},
+                {"fireReleased", [](lua_State* lua, Input* component){
+                    lua_pushboolean(lua, component->fireReleased ? 1 : 0);
+                }},
+                {"fireThisTick", [](lua_State* lua, Input* component){
+                    lua_pushboolean(lua, component->fireThisTick ? 1 : 0);
+                }},
+                {"move", [](lua_State* lua, Input* component){
+                    const std::string moveAsString(1, component->move);
+                    lua_pushstring(lua, moveAsString.c_str());
+                }},
+                {"moveReleased", [](lua_State* lua, Input* component){
+                    lua_pushboolean(lua, component->moveReleased ? 1 : 0);
+                }},
+                {"moveThisTick", [](lua_State* lua, Input* component){
+                    lua_pushboolean(lua, component->moveThisTick ? 1 : 0);
+                }},
+                {"weaponInFlight", [](lua_State* lua, Input* component){
+                    lua_pushboolean(lua, component->weaponInFlight ? 1 : 0);
+                }},
+                {"moveCooldown", [](lua_State* lua, Input* component){
+                    lua_pushinteger(lua, (lua_Integer)component->moveCooldown);
+                }},
+                {"usePotion", [](lua_State* lua, Input* component){
+                    lua_pushboolean(lua, component->usePotion ? 1 : 0);
+                }},
+            }
+        ),
+        std::make_shared< LuaPropertyMap< Input > >(
+            std::initializer_list< LuaPropertyMap< Input >::value_type >{
+                {"fire", [](lua_State* lua, Input* component){
+                    const std::string fire = luaL_checkstring(lua, 3);
+                    if (fire.empty()) {
+                        component->fire = 0;
+                    } else {
+                        component->fire = fire[0];
+                    }
+                }},
+                {"fireReleased", [](lua_State* lua, Input* component){
+                    luaL_checkany(lua, 3);
+                    component->fireReleased = (lua_toboolean(lua, 3) != 0);
+                }},
+                {"fireThisTick", [](lua_State* lua, Input* component){
+                    luaL_checkany(lua, 3);
+                    component->fireThisTick = (lua_toboolean(lua, 3) != 0);
+                }},
+                {"move", [](lua_State* lua, Input* component){
+                    const std::string move = luaL_checkstring(lua, 3);
+                    if (move.empty()) {
+                        component->move = 0;
+                    } else {
+                        component->move = move[0];
+                    }
+                }},
+                {"moveReleased", [](lua_State* lua, Input* component){
+                    luaL_checkany(lua, 3);
+                    component->moveReleased = (lua_toboolean(lua, 3) != 0);
+                }},
+                {"moveThisTick", [](lua_State* lua, Input* component){
+                    luaL_checkany(lua, 3);
+                    component->moveThisTick = (lua_toboolean(lua, 3) != 0);
+                }},
+                {"weaponInFlight", [](lua_State* lua, Input* component){
+                    luaL_checkany(lua, 3);
+                    component->weaponInFlight = (lua_toboolean(lua, 3) != 0);
+                }},
+                {"moveCooldown", [](lua_State* lua, Input* component){
+                    const auto moveCooldown = (int)luaL_checkinteger(lua, 3);
+                    component->moveCooldown = moveCooldown;
+                }},
+                {"usePotion", [](lua_State* lua, Input* component){
+                    luaL_checkany(lua, 3);
+                    component->usePotion = (lua_toboolean(lua, 3) != 0);
+                }},
+            }
+        )
     );
     impl_->MakeComponentType< Monster >(
         Type::Monster,
@@ -495,27 +620,152 @@ void Components::BuildComponentTypeMap(lua_State* lua) {
         Type::Pickup,
         lua,
         "pickups", "pickup",
-        PASS_THUNKS(Pickup)
+        PASS_THUNKS(Pickup),
+        std::make_shared< LuaPropertyMap< Pickup > >(
+            std::initializer_list< LuaPropertyMap< Pickup >::value_type >{
+                {"type", [](lua_State* lua, Pickup* component){
+                    std::string typeAsString;
+                    switch (component->type) {
+                        case Pickup::Type::Food: {
+                            typeAsString = "Food";
+                        } break;
+                        case Pickup::Type::Potion: {
+                            typeAsString = "Potion";
+                        } break;
+                        case Pickup::Type::Treasure: {
+                            typeAsString = "Treasure";
+                        } break;
+                        case Pickup::Type::Exit : {
+                            typeAsString = "Exit";
+                        } break;
+                        default: {
+                            typeAsString = "???";
+                        }
+                    }
+                    lua_pushstring(lua, typeAsString.c_str());
+                }},
+            }
+        ),
+        std::make_shared< LuaPropertyMap< Pickup > >(
+            std::initializer_list< LuaPropertyMap< Pickup >::value_type >{
+                {"type", [](lua_State* lua, Pickup* component){
+                    const std::string type = luaL_checkstring(lua, 3);
+                    if (type == "Food") {
+                        component->type = Pickup::Type::Food;
+                    } else if (type == "Potion") {
+                        component->type = Pickup::Type::Potion;
+                    } else if (type == "Treasure") {
+                        component->type = Pickup::Type::Treasure;
+                    } else if (type == "Exit") {
+                        component->type = Pickup::Type::Exit;
+                    }
+                }},
+            }
+        )
     );
     impl_->MakeComponentType< Position >(
         Type::Position,
         lua,
         "position", "position",
-        PASS_THUNKS(Position)
+        PASS_THUNKS(Position),
+        std::make_shared< LuaPropertyMap< Position > >(
+            std::initializer_list< LuaPropertyMap< Position >::value_type >{
+                {"x", [](lua_State* lua, Position* component){
+                    lua_pushinteger(lua, (lua_Integer)component->x);
+                }},
+                {"y", [](lua_State* lua, Position* component){
+                    lua_pushinteger(lua, (lua_Integer)component->y);
+                }},
+            }
+        ),
+        std::make_shared< LuaPropertyMap< Position > >(
+            std::initializer_list< LuaPropertyMap< Position >::value_type >{
+                {"x", [](lua_State* lua, Position* component){
+                    const auto x = (int)luaL_checkinteger(lua, 3);
+                    component->x = x;
+                }},
+                {"y", [](lua_State* lua, Position* component){
+                    const auto y = (int)luaL_checkinteger(lua, 3);
+                    component->y = y;
+                }},
+            }
+        )
     );
     impl_->MakeComponentType< Reward >(
         Type::Reward,
         lua,
         "rewards", "reward",
-        PASS_THUNKS(Reward)
+        PASS_THUNKS(Reward),
+        std::make_shared< LuaPropertyMap< Reward > >(
+            std::initializer_list< LuaPropertyMap< Reward >::value_type >{
+                {"score", [](lua_State* lua, Reward* component){
+                    lua_pushinteger(lua, (lua_Integer)component->score);
+                }},
+            }
+        ),
+        std::make_shared< LuaPropertyMap< Reward > >(
+            std::initializer_list< LuaPropertyMap< Reward >::value_type >{
+                {"score", [](lua_State* lua, Reward* component){
+                    const auto score = (int)luaL_checkinteger(lua, 3);
+                    component->score = score;
+                }},
+            }
+        )
     );
     impl_->MakeComponentType< Tile >(
         Type::Tile,
         lua,
         "tiles", "tile",
         PASS_THUNKS(Tile),
-        std::make_shared< LuaPropertyMap< Tile > >(),
-        std::make_shared< LuaPropertyMap< Tile > >(),
+        std::make_shared< LuaPropertyMap< Tile > >(
+            std::initializer_list< LuaPropertyMap< Tile >::value_type >{
+                {"name", [](lua_State* lua, Tile* component){
+                    lua_pushstring(lua, component->name.c_str());
+                }},
+                {"z", [](lua_State* lua, Tile* component){
+                    lua_pushinteger(lua, (lua_Integer)component->z);
+                }},
+                {"phase", [](lua_State* lua, Tile* component){
+                    lua_pushinteger(lua, (lua_Integer)component->phase);
+                }},
+                {"spinning", [](lua_State* lua, Tile* component){
+                    lua_pushboolean(lua, component->spinning ? 1 : 0);
+                }},
+                {"dirty", [](lua_State* lua, Tile* component){
+                    lua_pushboolean(lua, component->dirty ? 1 : 0);
+                }},
+                {"destroyed", [](lua_State* lua, Tile* component){
+                    lua_pushboolean(lua, component->destroyed ? 1 : 0);
+                }},
+            }
+        ),
+        std::make_shared< LuaPropertyMap< Tile > >(
+            std::initializer_list< LuaPropertyMap< Tile >::value_type >{
+                {"name", [](lua_State* lua, Tile* component){
+                    component->name = luaL_checkstring(lua, 3);
+                }},
+                {"z", [](lua_State* lua, Tile* component){
+                    const auto z = (int)luaL_checkinteger(lua, 3);
+                    component->z = z;
+                }},
+                {"phase", [](lua_State* lua, Tile* component){
+                    const auto phase = (int)luaL_checkinteger(lua, 3);
+                    component->phase = phase;
+                }},
+                {"spinning", [](lua_State* lua, Tile* component){
+                    luaL_checkany(lua, 3);
+                    component->spinning = (lua_toboolean(lua, 3) != 0);
+                }},
+                {"dirty", [](lua_State* lua, Tile* component){
+                    luaL_checkany(lua, 3);
+                    component->dirty = (lua_toboolean(lua, 3) != 0);
+                }},
+                {"destroyed", [](lua_State* lua, Tile* component){
+                    luaL_checkany(lua, 3);
+                    component->destroyed = (lua_toboolean(lua, 3) != 0);
+                }},
+            }
+        ),
         [](
             std::vector< Tile >& components,
             int entityId
@@ -532,7 +782,36 @@ void Components::BuildComponentTypeMap(lua_State* lua) {
         Type::Weapon,
         lua,
         "weapons", "weapon",
-        PASS_THUNKS(Weapon)
+        PASS_THUNKS(Weapon),
+        std::make_shared< LuaPropertyMap< Weapon > >(
+            std::initializer_list< LuaPropertyMap< Weapon >::value_type >{
+                {"dx", [](lua_State* lua, Weapon* component){
+                    lua_pushinteger(lua, (lua_Integer)component->dx);
+                }},
+                {"dy", [](lua_State* lua, Weapon* component){
+                    lua_pushinteger(lua, (lua_Integer)component->dy);
+                }},
+                {"ownerId", [](lua_State* lua, Weapon* component){
+                    lua_pushinteger(lua, (lua_Integer)component->ownerId);
+                }},
+            }
+        ),
+        std::make_shared< LuaPropertyMap< Weapon > >(
+            std::initializer_list< LuaPropertyMap< Weapon >::value_type >{
+                {"dx", [](lua_State* lua, Weapon* component){
+                    const auto dx = (int)luaL_checkinteger(lua, 3);
+                    component->dx = dx;
+                }},
+                {"dy", [](lua_State* lua, Weapon* component){
+                    const auto dy = (int)luaL_checkinteger(lua, 3);
+                    component->dy = dy;
+                }},
+                {"ownerId", [](lua_State* lua, Weapon* component){
+                    const auto ownerId = (int)luaL_checkinteger(lua, 3);
+                    component->ownerId = ownerId;
+                }},
+            }
+        )
     );
 }
 
