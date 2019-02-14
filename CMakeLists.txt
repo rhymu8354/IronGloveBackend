@@ -21,8 +21,6 @@ set(Sources
     src/Systems/AI.hpp
     src/Systems/PlayerFiring.cpp
     src/Systems/PlayerFiring.hpp
-    src/Systems/PlayerMovement.cpp
-    src/Systems/PlayerMovement.hpp
     src/Systems/Render.cpp
     src/Systems/Render.hpp
     src/Systems/Weapons.cpp

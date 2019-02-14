@@ -1,14 +1,4 @@
-function Weapons(components, tick)
-end
-
-function PlayerFiring(components, tick)
-end
-
-function PlayerMovement(components, tick)
-end
-
-function AI(components, tick)
-end
+-- Utilities
 
 function AddMonster(components, x, y)
     local id = components:CreateEntity()
@@ -35,6 +25,67 @@ function IsObstacleInTheWay(components, x, y, mask)
         end
     end
     return false
+end
+
+-- Systems
+
+function Weapons(components, tick)
+end
+
+function PlayerFiring(components, tick)
+end
+
+function PlayerMovement(components, tick)
+    for input in components.inputs do
+        if input.moveCooldown > 0 then
+            input.moveCooldown = input.moveCooldown - 1
+        elseif input.fire == "" then
+            local position = components:GetEntityComponentOfType("position", input.entityId)
+            if position then
+                local collider = components:GetEntityComponentOfType("collider", input.entityId)
+                local mask = collider and collider.mask or 0
+                components:DiagnosticMessage(3, "mask: " .. mask)
+                local moveDelegates = {
+                    ['j'] = function()
+                        if not IsObstacleInTheWay(components, position.x - 1, position.y, mask) then
+                            position.x = position.x - 1
+                        end
+                    end,
+                    ['l'] = function()
+                        if not IsObstacleInTheWay(components, position.x + 1, position.y, mask) then
+                            position.x = position.x + 1
+                        end
+                    end,
+                    ['i'] = function()
+                        if not IsObstacleInTheWay(components, position.x, position.y - 1, mask) then
+                            position.y = position.y - 1
+                        end
+                    end,
+                    ['k'] = function()
+                        if not IsObstacleInTheWay(components, position.x, position.y + 1, mask) then
+                            position.y = position.y + 1
+                        end
+                    end,
+                }
+                local moveDelegate = moveDelegates[input.move]
+                if moveDelegate then
+                    moveDelegate()
+                end
+                input.moveCooldown = 1
+                input.moveThisTick = false
+                if input.moveReleased then
+                    input.move = ""
+                end
+                local tile = components:GetEntityComponentOfType("tile", input.entityId)
+                if tile then
+                    tile.dirty = true
+                end
+            end
+        end
+    end
+end
+
+function AI(components, tick)
 end
 
 function Generation(components, tick)

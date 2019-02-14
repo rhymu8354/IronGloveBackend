@@ -1,7 +1,6 @@
 #include "Systems.hpp"
 #include "Systems/AI.hpp"
 #include "Systems/PlayerFiring.hpp"
-#include "Systems/PlayerMovement.hpp"
 #include "Systems/Render.hpp"
 #include "Systems/Weapons.hpp"
 
@@ -13,7 +12,6 @@ SystemCollection Systems(
     return {
         std::make_shared< Weapons >(),
         std::make_shared< PlayerFiring >(),
-        std::make_shared< PlayerMovement >(),
         std::make_shared< AI >(),
         render,
     };
