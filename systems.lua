@@ -20,7 +20,7 @@ end
 function IsObstacleInTheWay(components, x, y, mask)
     for collider in components.colliders do
         local position = components:GetEntityComponentOfType("position", collider.entityId)
-        if position and (position.x == x) and (position.y == y) and (mask & collider.mask) then
+        if position and (position.x == x) and (position.y == y) and (mask & collider.mask) ~= 0 then
             return true
         end
     end
