@@ -93,6 +93,73 @@ function Weapons(components, tick)
 end
 
 function PlayerFiring(components, tick)
+    for input in components.inputs do
+        local hero = components:GetEntityComponentOfType("hero", input.entityId)
+        local playerPosition = components:GetEntityComponentOfType("position", input.entityId)
+        if hero and playerPosition then
+            if input.usePotion and hero.potions > 0 then
+                hero.potions = hero.potions - 1
+                entitiesDestroyed = {}
+                for monster in components.monsters do
+                    local monsterPosition = components:GetEntityComponentOfType("position", monster.entityId)
+                    if monsterPosition then
+                        local dx = monsterPosition.x - playerPosition.x
+                        local dy = monsterPosition.y - playerPosition.y
+                        if math.sqrt((dx * dx) + (dy * dy)) <= 5 then
+                            entitiesDestroyed[#entitiesDestroyed + 1] = monster.entityId
+                            local reward = components:GetEntityComponentOfType("reward", monster.entityId)
+                            if reward then
+                                hero.score = hero.score + reward.score
+                            end
+                        end
+                    end
+                end
+                for i,entityId in ipairs(entitiesDestroyed) do
+                    components:KillEntity(entityId)
+                end
+            end
+            input.usePotion = false
+            if input.fire ~= "" and not input.weaponInFlight then
+                local dx = 0
+                local dy = 0
+                local fireDelegates = {
+                    ["a"] = function()
+                        dx = -1
+                    end,
+                    ["d"] = function()
+                        dx = 1
+                    end,
+                    ["w"] = function()
+                        dy = -1
+                    end,
+                    ["s"] = function()
+                        dy = 1
+                    end,
+                }
+                local fireDelegate = fireDelegates[input.fire]
+                if fireDelegate then
+                    fireDelegate()
+                end
+                input.fireThisTick = false
+                if input.fireReleased then
+                    input.fire = ""
+                end
+                local id = components:CreateEntity()
+                local weapon = components:CreateComponentOfType("weapon", id)
+                local weaponPosition = components:CreateComponentOfType("position", id)
+                local tile = components:CreateComponentOfType("tile", id)
+                weapon.dx = dx
+                weapon.dy = dy
+                tile.name = "axe"
+                tile.z = 2
+                tile.spinning = true
+                weaponPosition.x = playerPosition.x + dx
+                weaponPosition.y = playerPosition.y + dy
+                weapon.ownerId = input.entityId
+                input.weaponInFlight = true
+            end
+        end
+    end
 end
 
 function PlayerMovement(components, tick)
@@ -105,22 +172,22 @@ function PlayerMovement(components, tick)
                 local collider = components:GetEntityComponentOfType("collider", input.entityId)
                 local mask = collider and collider.mask or 0
                 local moveDelegates = {
-                    ['j'] = function()
+                    ["j"] = function()
                         if not IsObstacleInTheWay(components, position.x - 1, position.y, mask) then
                             position.x = position.x - 1
                         end
                     end,
-                    ['l'] = function()
+                    ["l"] = function()
                         if not IsObstacleInTheWay(components, position.x + 1, position.y, mask) then
                             position.x = position.x + 1
                         end
                     end,
-                    ['i'] = function()
+                    ["i"] = function()
                         if not IsObstacleInTheWay(components, position.x, position.y - 1, mask) then
                             position.y = position.y - 1
                         end
                     end,
-                    ['k'] = function()
+                    ["k"] = function()
                         if not IsObstacleInTheWay(components, position.x, position.y + 1, mask) then
                             position.y = position.y + 1
                         end
@@ -145,6 +212,100 @@ function PlayerMovement(components, tick)
 end
 
 function AI(components, tick)
+    if tick % 5 ~= 0 then return end
+    local heroes = components.heroes
+    if #heroes ~= 1 then return end
+    local hero = heroes[1]
+    local playerPosition = components:GetEntityComponentOfType("position", hero.entityId)
+    if not playerPosition then return end
+    local playerHealth = components:GetEntityComponentOfType("health", hero.entityId)
+    local colliders = components.colliders
+    entitiesDestroyed = {}
+    local playerDestroyed = false
+    for monster in components.monsters do
+        local position = components:GetEntityComponentOfType("position", monster.entityId)
+        local tile = components:GetEntityComponentOfType("tile", monster.entityId)
+        if position then
+            local collider = components:GetEntityComponentOfType("collider", monster.entityId)
+            local mask = collider and collider.mask or 0
+            local dx = math.abs(position.x - playerPosition.x)
+            local dy = math.abs(position.y - playerPosition.y)
+            local mx = 0
+            local my = 0
+            if position.x < playerPosition.x then
+                mx = 1
+            elseif position.x > playerPosition.x then
+                mx = -1
+            end
+            if position.y < playerPosition.y then
+                my = 1
+            elseif position.y > playerPosition.y then
+                my = -1
+            end
+            if (
+                (
+                    (position.x + mx == playerPosition.x)
+                    and (position.y == playerPosition.y)
+                )
+                or (
+                    (position.x == playerPosition.x)
+                    and (position.y + my == playerPosition.y)
+                )
+            ) then
+                if playerHealth ~= nullptr and not playerDestroyed then
+                    playerHealth.hp = playerHealth.hp - 10
+                    if playerHealth.hp <= 0 then
+                        playerHealth.hp = 0
+                        playerDestroyed = true
+                    end
+                end
+                local monsterHealth = components:GetEntityComponentOfType("health", monster.entityId)
+                if monsterHealth then
+                    monsterHealth.hp = 0
+                    entitiesDestroyed[#entitiesDestroyed + 1] = monster.entityId
+                end
+            else
+                if (
+                    (dx > dy)
+                    and not IsObstacleInTheWay(
+                        components,
+                        position.x + mx,
+                        position.y,
+                        mask
+                    )
+                ) then
+                    position.x = position.x + mx
+                elseif (
+                    not IsObstacleInTheWay(
+                        components,
+                        position.x,
+                        position.y + my,
+                        mask
+                    )
+                ) then
+                    position.y = position.y + my
+                elseif (
+                    not IsObstacleInTheWay(
+                        components,
+                        position.x + mx,
+                        position.y,
+                        mask
+                    )
+                ) then
+                    position.x = position.x + mx
+                end
+                if tile then
+                    tile.dirty = true
+                end
+            end
+        end
+    end
+    for i,entityId in ipairs(entitiesDestroyed) do
+        components:KillEntity(entityId)
+    end
+    if playerDestroyed then
+        components:KillEntity(hero.entityId)
+    end
 end
 
 function Generation(components, tick)
@@ -169,10 +330,7 @@ end
 
 function Pickup(components, tick)
     local heroes = components.heroes
-    if #heroes ~= 1 then
-        components:DiagnosticMessage(3, "#heroes ~= 1")
-        return
-    end
+    if #heroes ~= 1 then return end
     local hero = heroes[1]
     local playerPosition = components:GetEntityComponentOfType("position", hero.entityId)
     local playerHealth = components:GetEntityComponentOfType("health", hero.entityId)

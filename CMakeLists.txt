@@ -17,10 +17,6 @@ set(Sources
     src/Components/Reward.hpp
     src/Components/Tile.hpp
     src/Components/Weapon.hpp
-    src/Systems/AI.cpp
-    src/Systems/AI.hpp
-    src/Systems/PlayerFiring.cpp
-    src/Systems/PlayerFiring.hpp
     src/Systems/Render.cpp
     src/Systems/Render.hpp
     src/Component.hpp
