@@ -1,6 +1,7 @@
 #include "PlayerFiring.hpp"
 
 #include <Json/Value.hpp>
+#include <math.h>
 #include <memory>
 #include <set>
 #include <WebSockets/WebSocket.hpp>
