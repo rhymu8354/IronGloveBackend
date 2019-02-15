@@ -13,7 +13,7 @@ struct AI::Impl {
     std::shared_ptr< WebSockets::WebSocket > ws;
 };
 
-AI::~AI() = default;
+AI::~AI() noexcept = default;
 
 AI::AI()
     : impl_(new Impl())
