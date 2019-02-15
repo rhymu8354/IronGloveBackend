@@ -44,7 +44,6 @@ function PlayerMovement(components, tick)
             if position then
                 local collider = components:GetEntityComponentOfType("collider", input.entityId)
                 local mask = collider and collider.mask or 0
-                components:DiagnosticMessage(3, "mask: " .. mask)
                 local moveDelegates = {
                     ['j'] = function()
                         if not IsObstacleInTheWay(components, position.x - 1, position.y, mask) then
@@ -70,15 +69,15 @@ function PlayerMovement(components, tick)
                 local moveDelegate = moveDelegates[input.move]
                 if moveDelegate then
                     moveDelegate()
-                end
-                input.moveCooldown = 1
-                input.moveThisTick = false
-                if input.moveReleased then
-                    input.move = ""
-                end
-                local tile = components:GetEntityComponentOfType("tile", input.entityId)
-                if tile then
-                    tile.dirty = true
+                    input.moveCooldown = 1
+                    input.moveThisTick = false
+                    if input.moveReleased then
+                        input.move = ""
+                    end
+                    local tile = components:GetEntityComponentOfType("tile", input.entityId)
+                    if tile then
+                        tile.dirty = true
+                    end
                 end
             end
         end
@@ -118,7 +117,6 @@ function Pickup(components, tick)
     local playerPosition = components:GetEntityComponentOfType("position", hero.entityId)
     local playerHealth = components:GetEntityComponentOfType("health", hero.entityId)
     if not playerPosition or not playerHealth then
-        components:DiagnosticMessage(3, "hero is missing position and/or health")
         return
     end
     local entitiesDestroyed = {}
