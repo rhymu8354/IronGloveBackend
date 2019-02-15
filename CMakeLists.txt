@@ -23,8 +23,6 @@ set(Sources
     src/Systems/PlayerFiring.hpp
     src/Systems/Render.cpp
     src/Systems/Render.hpp
-    src/Systems/Weapons.cpp
-    src/Systems/Weapons.hpp
     src/Component.hpp
     src/Components.cpp
     src/Components.hpp

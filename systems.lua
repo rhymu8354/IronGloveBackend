@@ -17,6 +17,16 @@ function AddMonster(components, x, y)
     reward.score = 10
 end
 
+function GetColliderAt(components, x, y)
+    for collider in components.colliders do
+        local position = components:GetEntityComponentOfType("position", collider.entityId)
+        if position and position.x == x and position.y == y then
+            return collider
+        end
+    end
+    return nil
+end
+
 function IsObstacleInTheWay(components, x, y, mask)
     for collider in components.colliders do
         local position = components:GetEntityComponentOfType("position", collider.entityId)
@@ -27,9 +37,59 @@ function IsObstacleInTheWay(components, x, y, mask)
     return false
 end
 
+function OnStrike(components, weapon, victimCollider, entitiesDestroyed)
+    local ownerInput = components:GetEntityComponentOfType("input", weapon.ownerId)
+    local ownerHero = components:GetEntityComponentOfType("hero", weapon.ownerId)
+    local health = components:GetEntityComponentOfType("health", victimCollider.entityId)
+    local reward = components:GetEntityComponentOfType("reward", victimCollider.entityId)
+    if health then
+        health.hp = health.hp - 1
+        if health.hp <= 0 then
+            entitiesDestroyed[#entitiesDestroyed + 1] = victimCollider.entityId
+            if ownerHero and reward then
+                ownerHero.score = ownerHero.score + reward.score
+            end
+        end
+    end
+    entitiesDestroyed[#entitiesDestroyed + 1] = weapon.entityId
+    if ownerInput then
+        ownerInput.weaponInFlight = false
+    end
+end
+
 -- Systems
 
 function Weapons(components, tick)
+    local entitiesDestroyed = {}
+    for weapon in components.weapons do
+        local position = components:GetEntityComponentOfType("position", weapon.entityId)
+        if position then
+            local tile = components:GetEntityComponentOfType("tile", weapon.entityId)
+            if tile then
+                tile.phase = ((tile.phase + 1) % 4)
+            end
+            local collider = GetColliderAt(components, position.x, position.y)
+            if collider then
+                OnStrike(components, weapon, collider, entitiesDestroyed)
+            else
+                local x = position.x + weapon.dx
+                local y = position.y + weapon.dy
+                collider = GetColliderAt(components, x, y)
+                if collider then
+                    OnStrike(components, weapon, collider, entitiesDestroyed)
+                else
+                    position.x = x
+                    position.y = y
+                    if tile then
+                        tile.dirty = true
+                    end
+                end
+            end
+        end
+    end
+    for i,entityId in ipairs(entitiesDestroyed) do
+        components:KillEntity(entityId)
+    end
 end
 
 function PlayerFiring(components, tick)
