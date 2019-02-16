@@ -1,7 +1,7 @@
 #include "Components.hpp"
 #include "game.hpp"
 #include "ScriptHost.hpp"
-#include "Systems.hpp"
+#include "WebSocketWrapper.hpp"
 
 #include <algorithm>
 #include <future>
@@ -48,7 +48,6 @@ struct Game::Impl
     CompleteDelegate completeDelegate;
     std::shared_ptr< SystemAbstractions::DiagnosticsSender > diagnosticsSender;
     Components components;
-    SystemCollection systems;
     ScriptHost scriptHost;
     std::mutex mutex;
     std::promise< void > stopWorker;
@@ -61,10 +60,6 @@ struct Game::Impl
     }
 
     void LoadSystems() {
-        // Load the legacy C++ systems.
-        systems = Systems(ws);
-
-        // Read and parse Lua systems.
         SystemAbstractions::File systemsLuaFile(
             SystemAbstractions::File::GetExeParentDirectory()
             + "/systems.lua"
@@ -310,15 +305,9 @@ struct Game::Impl
         ) {
             ++tick;
             std::lock_guard< decltype(mutex) > lock(mutex);
-
-            // Update legacy C++ systems.
-            for (const auto system: systems) {
-                system->Update(components, tick);
-            }
-
-            // Update new Lua systems.
             const auto lua = scriptHost.GetLua();
             components.PushLua(lua);
+            WebSocketWrapper::PushLua(lua, ws);
             lua_pushinteger(lua, (lua_Integer)tick);
             const auto errorMessage = scriptHost.Call("update");
             if (!errorMessage.empty()) {
@@ -335,7 +324,7 @@ struct Game::Impl
     }
 };
 
-Game::~Game() = default;
+Game::~Game() noexcept = default;
 Game::Game(const std::string& id)
     : impl_(new Impl(id))
 {

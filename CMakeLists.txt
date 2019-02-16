@@ -17,21 +17,20 @@ set(Sources
     src/Components/Reward.hpp
     src/Components/Tile.hpp
     src/Components/Weapon.hpp
-    src/Systems/Render.cpp
-    src/Systems/Render.hpp
     src/Component.hpp
     src/Components.cpp
     src/Components.hpp
     src/game.cpp
     src/game.hpp
+    src/JsonWrapper.cpp
+    src/JsonWrapper.hpp
     src/main.cpp
     src/ScriptHost.cpp
     src/ScriptHost.hpp
-    src/System.hpp
-    src/Systems.cpp
-    src/Systems.hpp
     src/TimeKeeper.cpp
     src/TimeKeeper.hpp
+    src/WebSocketWrapper.cpp
+    src/WebSocketWrapper.hpp
 )
 
 add_executable(${This} ${Sources})

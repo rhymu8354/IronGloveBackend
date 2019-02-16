@@ -59,7 +59,7 @@ end
 
 -- Systems
 
-function Weapons(components, tick)
+function Weapons(components, ws, tick)
     local entitiesDestroyed = {}
     for weapon in components.weapons do
         local position = components:GetEntityComponentOfType("position", weapon.entityId)
@@ -92,7 +92,7 @@ function Weapons(components, tick)
     end
 end
 
-function PlayerFiring(components, tick)
+function PlayerFiring(components, ws, tick)
     for input in components.inputs do
         local hero = components:GetEntityComponentOfType("hero", input.entityId)
         local playerPosition = components:GetEntityComponentOfType("position", input.entityId)
@@ -162,7 +162,7 @@ function PlayerFiring(components, tick)
     end
 end
 
-function PlayerMovement(components, tick)
+function PlayerMovement(components, ws, tick)
     for input in components.inputs do
         if input.moveCooldown > 0 then
             input.moveCooldown = input.moveCooldown - 1
@@ -211,7 +211,7 @@ function PlayerMovement(components, tick)
     end
 end
 
-function AI(components, tick)
+function AI(components, ws, tick)
     if tick % 5 ~= 0 then return end
     local heroes = components.heroes
     if #heroes ~= 1 then return end
@@ -308,7 +308,7 @@ function AI(components, tick)
     end
 end
 
-function Generation(components, tick)
+function Generation(components, ws, tick)
     for generator in components.generators do
         local position = components:GetEntityComponentOfType("position", generator.entityId)
         local roll = math.random()
@@ -328,7 +328,7 @@ function Generation(components, tick)
     end
 end
 
-function Pickup(components, tick)
+function Pickup(components, ws, tick)
     local heroes = components.heroes
     if #heroes ~= 1 then return end
     local hero = heroes[1]
@@ -370,7 +370,7 @@ function Pickup(components, tick)
     end
 end
 
-function Hunger(components, tick)
+function Hunger(components, ws, tick)
     if tick % 10 ~= 0 then return end
     local entitiesStarved = {}
     for hero in components.heroes do
@@ -388,7 +388,54 @@ function Hunger(components, tick)
     end
 end
 
-function Render(components, tick)
+local previousRender = json(nil)
+function Render(components, ws, tick)
+    local message = json.Parse('{"type": "render"}')
+    local sprites = json.Parse('[]')
+    local entitiesDestroyed = {}
+    for tile in components.tiles do
+        local sprite = json.Parse('{"id": ' .. tile.entityId .. '}')
+        if tile.destroyed then
+            sprite.destroyed = true
+            entitiesDestroyed[#entitiesDestroyed + 1] = tile.entityId
+        else
+            if not tile.dirty then goto continue end
+            tile.dirty = false
+            local position = components:GetEntityComponentOfType("position", tile.entityId)
+            if not position then goto continue end
+            sprite.texture = tile.name
+            sprite.x = position.x
+            sprite.y = position.y
+            sprite.z = tile.z
+            sprite.phase = tile.phase
+            sprite.spinning = tile.spinning
+            local weapon = components:GetEntityComponentOfType("weapon", tile.entityId)
+            if weapon then
+                local motion = json.Parse('{}')
+                motion.dx = weapon.dx
+                motion.dy = weapon.dy
+                sprite.motion = motion
+            end
+        end
+        json.Add(sprites, sprite)
+        ::continue::
+    end
+    message.sprites = sprites
+    local heroes = components.heroes
+    if #heroes == 1 then
+        local hero = heroes[1]
+        local playerHealth = components:GetEntityComponentOfType("health", hero.entityId)
+        message.health = playerHealth.hp
+        message.score = hero.score
+        message.potions = hero.potions
+    end
+    if message ~= previousRender then
+        ws:SendText(message)
+        previousRender = message
+    end
+    for i,entityId in ipairs(entitiesDestroyed) do
+        components:DestroyEntityComponentOfType("tile", entityId)
+    end
 end
 
 systems = {
@@ -402,8 +449,8 @@ systems = {
     Render
 }
 
-function update(components, tick)
+function update(components, ws, tick)
     for i,system in ipairs(systems) do
-        system(components, tick)
+        system(components, ws, tick)
     end
 end

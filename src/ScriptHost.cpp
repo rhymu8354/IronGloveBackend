@@ -7,7 +7,9 @@
  */
 
 #include "Components.hpp"
+#include "JsonWrapper.hpp"
 #include "ScriptHost.hpp"
+#include "WebSocketWrapper.hpp"
 
 #include <stdlib.h>
 #include <string>
@@ -144,6 +146,8 @@ struct ScriptHost::Impl {
 
         // Initialize wrapper types.
         Components::LinkLua(lua);
+        JsonWrapper::LinkLua(lua);
+        WebSocketWrapper::LinkLua(lua);
     }
 
     ~Impl() {
