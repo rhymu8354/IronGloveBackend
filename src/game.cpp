@@ -248,9 +248,11 @@ struct Game::Impl
             }
             const auto start = timeKeeper->GetCurrentTime();
             ++tick;
-            std::lock_guard< decltype(mutex) > lock(mutex);
-            for (const auto system: systems) {
-                system->Update(components, tick);
+            {
+                std::lock_guard< decltype(mutex) > lock(mutex);
+                for (const auto system: systems) {
+                    system->Update(components, tick);
+                }
             }
             const auto finish = timeKeeper->GetCurrentTime();
             const auto measurement = (finish - start);
@@ -263,7 +265,7 @@ struct Game::Impl
             maxMeasurement = std::max(maxMeasurement, measurement);
             if (++numMeasurements >= measurementIntervalLoops) {
                 const auto avgMeasurement = sumMeasurements / numMeasurements;
-                diagnosticsSender->SendDiagnosticInformationFormatted(
+                diagnosticsSender.SendDiagnosticInformationFormatted(
                     3,
                     "min=%lf avg=%lf max=%lf",
                     minMeasurement,
