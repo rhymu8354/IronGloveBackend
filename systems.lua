@@ -30,7 +30,7 @@ end
 function IsObstacleInTheWay(components, x, y, mask)
     for collider in components.colliders do
         local position = components:GetEntityComponentOfType("position", collider.entityId)
-        if position and (position.x == x) and (position.y == y) and (mask & collider.mask) ~= 0 then
+        if position and (position.x == x) and (position.y == y) and (bit.band(mask, collider.mask)) ~= 0 then
             return true
         end
     end
@@ -321,7 +321,7 @@ function Generation(components, ws, tick)
             else
                 y = y + 2 * (d % 2) - 1
             end
-            if not IsObstacleInTheWay(components, x, y, ~0) then
+            if not IsObstacleInTheWay(components, x, y, bit.bnot(0)) then
                 AddMonster(components, x, y)
             end
         end

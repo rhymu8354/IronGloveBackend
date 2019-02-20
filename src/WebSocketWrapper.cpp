@@ -6,6 +6,7 @@
  * © 2019 by Richard Walters
  */
 
+#include "SnaggedFromFutureLua.hpp"
 #include "WebSocketWrapper.hpp"
 
 #include <Json/Value.hpp>

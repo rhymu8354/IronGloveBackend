@@ -7,6 +7,9 @@
  */
 
 #include "JsonWrapper.hpp"
+#include "SnaggedFromFutureLua.hpp"
+
+#include <limits>
 
 namespace {
 
@@ -32,10 +35,12 @@ namespace {
                 return Json::Value();
             } break;
             case LUA_TNUMBER: {
-                if (lua_isinteger(lua, index)) {
-                    return Json::Value((int)lua_tointeger(lua, index));
+                const auto value = (double)lua_tonumber(lua, index);
+                const auto roundedValue = round(value);
+                if (fabs(roundedValue - value) < std::numeric_limits< double >::epsilon()) {
+                    return Json::Value((int)roundedValue);
                 } else {
-                    return Json::Value((double)lua_tonumber(lua, index));
+                    return Json::Value(value);
                 }
             } break;
             case LUA_TBOOLEAN: {

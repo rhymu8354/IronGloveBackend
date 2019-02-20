@@ -15,39 +15,11 @@
 #include <string>
 #include <SystemAbstractions/StringExtensions.hpp>
 
-namespace {
+extern "C" {
+#include <luajit.h>
+}
 
-    /**
-     * This function is provided to the Lua interpreter for use in
-     * allocating memory.
-     *
-     * @param[in] ud
-     *     This is the "ud" opaque pointer given to lua_newstate when
-     *     the Lua interpreter state was created.
-     *
-     * @param[in] ptr
-     *     If not NULL, this points to the memory block to be
-     *     freed or reallocated.
-     *
-     * @param[in] osize
-     *     This is the size of the memory block pointed to by "ptr".
-     *
-     * @param[in] nsize
-     *     This is the number of bytes of memory to allocate or reallocate,
-     *     or zero if the given block should be freed instead.
-     *
-     * @return
-     *     A pointer to the allocated or reallocated memory block is
-     *     returned, or NULL is returned if the given memory block was freed.
-     */
-    void* LuaAllocator(void* ud, void* ptr, size_t osize, size_t nsize) {
-        if (nsize == 0) {
-            free(ptr);
-            return NULL;
-        } else {
-            return realloc(ptr, nsize);
-        }
-    }
+namespace {
 
     /**
      * This structure is used to pass state from the caller of the
@@ -133,7 +105,10 @@ struct ScriptHost::Impl {
 
     Impl() {
         // Instantiate Lua interpreter.
-        lua = lua_newstate(LuaAllocator, NULL);
+        lua = luaL_newstate();
+
+        // Crank up the performance OVER 9000!
+//        luaJIT_setmode(lua, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_ON);
 
         // Load standard Lua libraries.
         //
@@ -175,10 +150,10 @@ std::string ScriptHost::LoadScript(
     LuaReaderState luaReaderState;
     luaReaderState.chunk = &script;
     std::string errorMessage;
-    switch (const int luaLoadResult = lua_load(impl_->lua, LuaReader, &luaReaderState, ("=" + name).c_str(), "t")) {
-        case LUA_OK: {
+    switch (const int luaLoadResult = lua_load(impl_->lua, LuaReader, &luaReaderState, ("=" + name).c_str())) {
+        case 0: {
             const int luaPCallResult = lua_pcall(impl_->lua, 0, 0, 1);
-            if (luaPCallResult != LUA_OK) {
+            if (luaPCallResult != 0) {
                 if (!lua_isnil(impl_->lua, -1)) {
                     errorMessage = lua_tostring(impl_->lua, -1);
                 }
@@ -189,9 +164,6 @@ std::string ScriptHost::LoadScript(
         } break;
         case LUA_ERRMEM: {
             errorMessage = "LUA_ERRMEM";
-        } break;
-        case LUA_ERRGCMM: {
-            errorMessage = "LUA_ERRGCMM";
         } break;
         default: {
             errorMessage = SystemAbstractions::sprintf("(unexpected lua_load result: %d)", luaLoadResult);
@@ -209,7 +181,7 @@ std::string ScriptHost::Call(const std::string& luaFunctionName) {
     lua_insert(impl_->lua, 2);
     const int luaPCallResult = lua_pcall(impl_->lua, numberOfArguments, 0, 1);
     std::string errorMessage;
-    if (luaPCallResult != LUA_OK) {
+    if (luaPCallResult != 0) {
         if (!lua_isnil(impl_->lua, -1)) {
             errorMessage = lua_tostring(impl_->lua, -1);
         }

@@ -1,4 +1,5 @@
 #include "Components.hpp"
+#include "SnaggedFromFutureLua.hpp"
 
 #include <algorithm>
 #include <functional>

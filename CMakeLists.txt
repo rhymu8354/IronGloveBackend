@@ -27,6 +27,8 @@ set(Sources
     src/main.cpp
     src/ScriptHost.cpp
     src/ScriptHost.hpp
+    src/SnaggedFromFutureLua.cpp
+    src/SnaggedFromFutureLua.hpp
     src/TimeKeeper.cpp
     src/TimeKeeper.hpp
     src/WebSocketWrapper.cpp
@@ -41,7 +43,7 @@ set_target_properties(${This} PROPERTIES
 target_link_libraries(${This} PUBLIC
     Json
     HttpNetworkTransport
-    LuaLibrary
+    LuaJIT
     SystemAbstractions
     WebSockets
 )
@@ -51,3 +53,7 @@ if(UNIX AND NOT APPLE)
         -static-libstdc++
     )
 endif(UNIX AND NOT APPLE)
+
+add_custom_command(TARGET ${This} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:LuaJIT> $<TARGET_FILE_DIR:${This}>
+)
