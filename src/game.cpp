@@ -4,6 +4,7 @@
 
 #include <future>
 #include <Json/Value.hpp>
+#include <math.h>
 #include <mutex>
 #include <string>
 #include <SystemAbstractions/DiagnosticsSender.hpp>
@@ -13,6 +14,7 @@ struct Game::Impl
     : public std::enable_shared_from_this< Game::Impl >
 {
     std::shared_ptr< WebSockets::WebSocket > ws;
+    std::shared_ptr< TimeKeeper > timeKeeper;
     CompleteDelegate completeDelegate;
     SystemAbstractions::DiagnosticsSender diagnosticsSender;
     Components components;
@@ -230,14 +232,45 @@ struct Game::Impl
         );
         auto workerToldToStop = stopWorker.get_future();
         size_t tick = 0;
+        const double measurementIntervalSeconds = 3.0;
+        const int ticksPerSecond = 10;
+        const size_t measurementIntervalLoops = (size_t)round(measurementIntervalSeconds * ticksPerSecond);
+        double minMeasurement, sumMeasurements, maxMeasurement;
+        size_t numMeasurements = 0;
         while (
-            workerToldToStop.wait_for(std::chrono::milliseconds(1000/10))
+            workerToldToStop.wait_for(std::chrono::milliseconds(1000/ticksPerSecond))
             != std::future_status::ready
         ) {
+            if (numMeasurements == 0) {
+                minMeasurement = 0.0;
+                sumMeasurements = 0.0;
+                maxMeasurement = 0.0;
+            }
+            const auto start = timeKeeper->GetCurrentTime();
             ++tick;
             std::lock_guard< decltype(mutex) > lock(mutex);
             for (const auto system: systems) {
                 system->Update(components, tick);
+            }
+            const auto finish = timeKeeper->GetCurrentTime();
+            const auto measurement = (finish - start);
+            if (numMeasurements == 0) {
+                minMeasurement = measurement;
+            } else {
+                minMeasurement = std::min(minMeasurement, measurement);
+            }
+            sumMeasurements += measurement;
+            maxMeasurement = std::max(maxMeasurement, measurement);
+            if (++numMeasurements >= measurementIntervalLoops) {
+                const auto avgMeasurement = sumMeasurements / numMeasurements;
+                diagnosticsSender->SendDiagnosticInformationFormatted(
+                    3,
+                    "min=%lf avg=%lf max=%lf",
+                    minMeasurement,
+                    avgMeasurement,
+                    maxMeasurement
+                );
+                numMeasurements = 0;
             }
         }
         diagnosticsSender.SendDiagnosticInformationString(
@@ -255,6 +288,7 @@ Game::Game(const std::string& id)
 
 void Game::Start(
     std::shared_ptr< WebSockets::WebSocket > ws,
+    std::shared_ptr< TimeKeeper > timeKeeper,
     SystemAbstractions::DiagnosticsSender::DiagnosticMessageDelegate diagnosticMessageDelegate,
     CompleteDelegate completeDelegate
 ) {
@@ -264,6 +298,7 @@ void Game::Start(
         "Try this level now!"
     );
     impl_->ws = ws;
+    impl_->timeKeeper = timeKeeper;
     impl_->completeDelegate = completeDelegate;
     impl_->systems = Systems(ws);
     impl_->AddPlayer(1, 1);

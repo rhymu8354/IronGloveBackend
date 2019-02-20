@@ -8,6 +8,8 @@
  * © 2019 by Richard Walters
  */
 
+#include "TimeKeeper.hpp"
+
 #include <functional>
 #include <memory>
 #include <SystemAbstractions/DiagnosticsSender.hpp>
@@ -37,6 +39,7 @@ public:
 
     void Start(
         std::shared_ptr< WebSockets::WebSocket > ws,
+        std::shared_ptr< TimeKeeper > timeKeeper,
         SystemAbstractions::DiagnosticsSender::DiagnosticMessageDelegate diagnosticMessageDelegate,
         CompleteDelegate completeDelegate
     );
