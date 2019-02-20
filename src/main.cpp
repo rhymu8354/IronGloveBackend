@@ -140,6 +140,7 @@ int main(int argc, char* argv[]) {
     std::set< std::shared_ptr< Game > > games;
     const auto webSocketDelegate = [
         &games,
+        timeKeeper,
         diagnosticsPublisher
     ](
         const std::string& id,
@@ -155,7 +156,7 @@ int main(int argc, char* argv[]) {
             (void)games.erase(game);
         };
         (void)games.insert(game);
-        game->Start(ws, diagnosticsPublisher, completeDelegate);
+        game->Start(ws, timeKeeper, diagnosticsPublisher, completeDelegate);
     };
     if (
         !SetUpWebServer(
