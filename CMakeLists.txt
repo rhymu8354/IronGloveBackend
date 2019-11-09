@@ -42,6 +42,7 @@ target_link_libraries(${This} PUBLIC
     Json
     HttpNetworkTransport
     LuaLibrary
+    StringExtensions
     SystemAbstractions
     WebSockets
 )

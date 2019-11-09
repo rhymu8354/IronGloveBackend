@@ -13,7 +13,7 @@
 
 #include <stdlib.h>
 #include <string>
-#include <SystemAbstractions/StringExtensions.hpp>
+#include <StringExtensions/StringExtensions.hpp>
 
 namespace {
 
@@ -194,7 +194,7 @@ std::string ScriptHost::LoadScript(
             errorMessage = "LUA_ERRGCMM";
         } break;
         default: {
-            errorMessage = SystemAbstractions::sprintf("(unexpected lua_load result: %d)", luaLoadResult);
+            errorMessage = StringExtensions::sprintf("(unexpected lua_load result: %d)", luaLoadResult);
         } break;
     }
     lua_settop(impl_->lua, 0);

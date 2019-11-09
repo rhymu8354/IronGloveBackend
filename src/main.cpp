@@ -20,9 +20,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
+#include <StringExtensions/StringExtensions.hpp>
 #include <SystemAbstractions/DiagnosticsSender.hpp>
 #include <SystemAbstractions/DiagnosticsStreamReporter.hpp>
-#include <SystemAbstractions/StringExtensions.hpp>
 #include <SystemAbstractions/NetworkConnection.hpp>
 #include <thread>
 #include <vector>
