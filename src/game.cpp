@@ -25,7 +25,7 @@ namespace {
      *     The contents of the file is returned.
      */
     std::string ReadFile(SystemAbstractions::File& file) {
-        if (!file.Open()) {
+        if (!file.OpenReadOnly()) {
             return "";
         }
         SystemAbstractions::IFile::Buffer buffer(file.GetSize());
