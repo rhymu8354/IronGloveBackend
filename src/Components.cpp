@@ -404,7 +404,7 @@ struct Components::Impl {
     type##ComponentIndex, type##ComponentIndexThunk, \
     type##ComponentNewIndex, type##ComponentNewIndexThunk
 
-Components::~Components() = default;
+Components::~Components() noexcept = default;
 
 Components::Components()
     : impl_(std::make_shared< Impl >())
