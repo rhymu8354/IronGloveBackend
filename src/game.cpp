@@ -390,6 +390,8 @@ void Game::Start(
     impl_->AddTreasure(9, 8);
     impl_->AddFood(12, 9);
     impl_->AddPotion(6, 6);
+    impl_->AddPotion(2, 6);
+    impl_->AddPotion(3, 7);
     impl_->AddExit(13, 11);
     for (int y = 0; y <= 12; ++y) {
         for (int x = 0; x <= 14; ++x) {
